@@ -1,0 +1,13 @@
+.build
+BUILD/
+.idea
+projectfiles
+*.py*
+
+mbed-os/
+RBDC-package/
+
+CMakeLists.txt
+cmake-build-debug/
+mbed_config.h
+GettingStarted.html

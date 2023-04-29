@@ -1,0 +1,14 @@
+{
+  "target_overrides": {
+    "*": {
+      "platform.minimal-printf-enable-floating-point": true,
+      "platform.stdio-baud-rate": 115200,
+      "platform.default-serial-baud-rate": 115200
+    }
+  },
+  "config": {
+    "main-thread-stack-size": {
+      "value": 16384
+    }
+  }
+}
