@@ -78,6 +78,11 @@ sixtron::MotorBasePokibot *basePokibot;
 #define PID_TETA_PRECISION 0.017453f // 1°
 #define PID_DV_PRECISION 0.005f // 0.5 cm
 
+// LORA
+static UnbufferedSerial lora(PC_6, PC_7, 9600);
+Thread loraThread(osPriorityBelowNormal, OS_STACK_SIZE);
+EventQueue loraEventQueue;
+
 /* #################################################################################################
  */
 
@@ -220,14 +225,30 @@ void terminal_printf(const char *fmt, ...) {
     terminal.write(terminal_shell_buff, strlen(terminal_shell_buff));
 }
 
-void process_terminalTX(char carac) {
+void process_terminalRX(char carac) {
+    lora.write(&carac,1);
 }
 
 void rxTerminalCallback() {
 
     char c;
     if (terminal.read(&c, 1)) {
-        terminalEventQueue.call(process_terminalTX, c);
+        terminalEventQueue.call(process_terminalRX, c);
+    }
+}
+
+/* ############################### LORAAAAA ########################################################
+ */
+
+void process_LoraRX(char carac) {
+    terminal_printf("%c",carac);
+}
+
+void rxLoraCallback() {
+
+    char c;
+    if (lora.read(&c, 1)) {
+        loraEventQueue.call(process_LoraRX, c);
     }
 }
 
@@ -257,11 +278,14 @@ int main() {
     terminalThread.start(callback(&terminalEventQueue, &EventQueue::dispatch_forever));
     terminal.attach(&rxTerminalCallback);
 
+    // Setup Lora Thread
+    loraThread.start(callback(&loraEventQueue, &EventQueue::dispatch_forever));
+    lora.attach(&rxLoraCallback);
+
     // Done init
     led_out_red = 0;
     led_out_green = 1;
     terminal_printf("Init Done.\n");
-    terminal_printf("\n> ");
 
     while (true) {
         mainThreadFlag.wait_any(MAIN_THREAD_FLAG);
