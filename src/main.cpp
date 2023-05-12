@@ -4,8 +4,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-#include "RBDC.h"
 #include "mbed.h"
+#include "common.h"
+#include "RBDC.h"
 #include "motor_base_pokibot.h"
 #include "motor_sensor_AS5047p.h"
 #include "odometry_pokibot.h"
@@ -79,12 +80,8 @@ sixtron::MotorBasePokibot *basePokibot;
 #define PID_DV_PRECISION 0.005f // 0.5 cm
 
 // LIDAR
-#define LIDAR_THREAD_FLAG 0x03
-EventFlags lidarThreadFlag;
-UnbufferedSerial serialLidar(PA_9, PA_10, 230400);
+//UnbufferedSerial serialLidar(PA_9, PA_10, 230400);
 Thread lidarThread(osPriorityAboveNormal, OS_STACK_SIZE);
-volatile char lidar_new_value, lidar_processing;
-volatile uint16_t lidar_overflow = 0, start_sequence_incr = 0;
 
 /* #################################################################################################
  */
@@ -219,33 +216,33 @@ void updateLidarDetect() {
 
 }
 
-void rxLidarCallback() {
-
-    char c;
-    if (serialLidar.read(&c, 1)) {
-
-
-        if ((start_sequence_incr == 0) && (c == 0xFA)){
-            start_sequence_incr = 1;
-        } else if((start_sequence_incr == 1) && (c == 0xA0)){
-            start_sequence_incr = 0;
-            lidarThreadFlag.set(LIDAR_THREAD_FLAG);
-            // setup DMA here
-
-            if (lidar_processing) {
-                lidar_overflow++;
-            }
-
-        } else {
-            start_sequence_incr = 0;
-        }
-
-
-//        lidarThreadFlag.set(LIDAR_THREAD_FLAG);
-//        serialLidarEventQueue.call(process_serialLidarTX, c);
-//        lidar_new_value = c;
-    }
-}
+//void rxLidarCallback() {
+//
+//    char c;
+//    if (serialLidar.read(&c, 1)) {
+//
+//
+//        if ((start_sequence_incr == 0) && (c == 0xFA)){
+//            start_sequence_incr = 1;
+//        } else if((start_sequence_incr == 1) && (c == 0xA0)){
+//            start_sequence_incr = 0;
+//            lidarThreadFlag.set(LIDAR_THREAD_FLAG);
+//            // setup DMA here
+//
+//            if (lidar_processing) {
+//                lidar_overflow++;
+//            }
+//
+//        } else {
+//            start_sequence_incr = 0;
+//        }
+//
+//
+////        lidarThreadFlag.set(LIDAR_THREAD_FLAG);
+////        serialLidarEventQueue.call(process_serialLidarTX, c);
+////        lidar_new_value = c;
+//    }
+//}
 
 /* #################################################################################################
  */
@@ -428,7 +425,7 @@ int main() {
 
     // Setup Lidar
     lidarThread.start(lidarMain);
-    serialLidar.attach(&rxLidarCallback);
+//    serialLidar.attach(&rxLidarCallback);
 
     // Done init
     led_out_red = 0;
