@@ -11,8 +11,8 @@
 
 // LIDAR
 #define LIDAR_THREAD_FLAG 0x03
-EventFlags lidarThreadFlag;
-uint8_t lidar_new_value, lidar_processing;
-volatile uint16_t lidar_overflow = 0, start_sequence_incr = 0;
+extern EventFlags lidarThreadFlag;
+extern uint8_t lidar_new_value, lidar_processing;
+extern uint16_t lidar_overflow, start_sequence_incr;
 
 #endif // POKIROBOT_SOFT_MBED_COMMON_H

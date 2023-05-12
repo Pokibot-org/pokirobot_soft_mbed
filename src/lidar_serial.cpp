@@ -5,9 +5,12 @@
  */
 
 #include "lidar_serial.h"
-#include <stm32f4xx_ll_exti.h>
 
-extern DMA_HandleTypeDef hdma_usart1_tx;
+EventFlags lidarThreadFlag;
+uint8_t lidar_new_value, lidar_processing;
+uint16_t lidar_overflow = 0, start_sequence_incr = 0;
+
+//extern DMA_HandleTypeDef hdma_usart1_tx;
 UART_HandleTypeDef huart1;
 
 // General handler, need to be linked to NVIC
@@ -15,9 +18,25 @@ void custom_usart1_IRQHandler(void) {
     HAL_UART_IRQHandler(&huart1);
 }
 
-// Called by HAL_UART_IRQHANDLER
+// Called by HAL_UART_IRQHandler
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
+    if ((start_sequence_incr == 0) && (lidar_new_value == 0xFA)){
+        start_sequence_incr = 1;
+    } else if((start_sequence_incr == 1) && (lidar_new_value == 0xA0)){
+        start_sequence_incr = 0;
+        lidarThreadFlag.set(LIDAR_THREAD_FLAG);
+        // setup DMA here
+
+        if (lidar_processing) {
+            lidar_overflow++;
+        }
+
+    } else {
+        start_sequence_incr = 0;
+    }
+
+    // Setup UART for next interrupt
     HAL_UART_Receive_IT(&huart1, &lidar_new_value, 1);
 }
 
