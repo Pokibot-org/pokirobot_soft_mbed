@@ -13,6 +13,7 @@ uint16_t lidar_overflow = 0, start_sequence_incr = 0;
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
 uint8_t lidar_frame[LDS_01_TRAM_LENGTH];
+uint16_t lidar_distances_mean[LDS_01_MEDIAN_RES];
 uint8_t dma_mode = 0;
 
 // General handler for UART Interrupt, need to be linked to NVIC using vector

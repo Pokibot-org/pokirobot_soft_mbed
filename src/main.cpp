@@ -87,140 +87,60 @@ Thread lidarThread(osPriorityAboveNormal, OS_STACK_SIZE);
  */
 
 void lidarMain() {
-    //	printf("\t\t\t\tCharacter received from lidar : 0x%X\n", carac);
-    //    if (lidar_mode == LIDAR_MODE_HEADER) {
-    //
-    //        if ((lidar_header_incr == 0) && (carac == 0x55)) {
-    //            lidar_header_incr++;
-    //        } else if ((lidar_header_incr == 1) && (carac == 0xAA)) {
-    //            lidar_header_incr++;
-    //        } else if ((lidar_header_incr == 2) && (carac == 0x03)) {
-    //            lidar_header_incr++;
-    //        } else if ((lidar_header_incr == 3) && (carac == 0x08)) {
-    //            lidar_header_incr = 0;
-    //            lidar_mode = LIDAR_MODE_MSG;
-    //        } else {
-    //            //Error
-    //            lidar_header_incr = 0;
-    //            lidar_mode = LIDAR_MODE_HEADER;
-    //            //			printf("Lidar ERROR (carac = %X)\n", carac);
-    //        }
-    //
-    //    } else if (lidar_mode == LIDAR_MODE_MSG) {
-    //        lidar_msg[lidar_msg_incr] = carac;
-    //        lidar_msg_incr++;
-    //
-    //        if (lidar_msg_incr == LIDAR_MSG_LENGTH) {
-    //            //			printf("Lidar lidar_msg Received\n");
-    //            lidar_mode = LIDAR_MODE_HEADER;
-    //            lidar_msg_incr = 0;
-    //
-    //            // Do calculus
-    //            lidar_hz = float((uint16_t) (lidar_msg[CAMSENSE_X1_SPEED_H_INDEX] << 8) |
-    //            lidar_msg[CAMSENSE_X1_SPEED_L_INDEX]) /
-    //                    3840.0f; // 3840.0 = (64 * 60)
-    //            lidar_startAngle =
-    //                    float(lidar_msg[CAMSENSE_X1_START_ANGLE_H_INDEX] << 8 |
-    //                    lidar_msg[CAMSENSE_X1_START_ANGLE_L_INDEX]) / 64.0f - 640.0f;
-    //            lidar_endAngle =
-    //                    float(lidar_msg[CAMSENSE_X1_END_ANGLE_H_INDEX] << 8 |
-    //                    lidar_msg[CAMSENSE_X1_END_ANGLE_L_INDEX]) / 64.0f - 640.0f;
-    //
-    //            //Get distance
-    //
-    //
-    //            float step = 0.0;
-    //            if (lidar_endAngle > lidar_startAngle) {
-    //                step = (lidar_endAngle - lidar_startAngle) / 8;
-    //            } else {
-    //                step = (lidar_endAngle - (lidar_startAngle - 360)) / 8;
-    //            }
-    //
-    //            uint32_t sum = 0;
-    //            uint8_t sum_num = 0;
-    //            for (int i = 0; i < 8; i++) // for each of the 8 samples
-    //            {
-    //                float sampleAngle = (lidar_startAngle + step * i) + (lidar_offset + 180);
-    //                float sampleIndexFloat = sampleAngle * lidar_IndexMultiplier; // map 0-360 to
-    //                0-400 int sampleIndex = round(sampleIndexFloat); // round to closest value.
-    //                lidar_index = sampleIndex % 400; // limit sampleIndex between 0 and 399 to
-    //                prevent segmentation fault
-    //
-    //
-    //                uint8_t distanceL = lidar_msg[4 + (i * 3)];
-    //                uint8_t distanceH = lidar_msg[5 + (i * 3)];
-    //                uint8_t quality = lidar_msg[6 + (i * 3)];
-    //
-    //
-    //                if (quality == 0) // invalid data
-    //                {
-    //                    lidar_distanceArray[lidar_index] = 0;
-    //                    lidar_qualityArray[lidar_index] = 0;
-    //                } else {
-    //                    lidar_distanceArray[lidar_index] = ((uint16_t) distanceH << 8) |
-    //                    distanceL; lidar_qualityArray[lidar_index] = quality; sum +=
-    //                    lidar_distanceArray[lidar_index]; sum_num++;
-    //                }
-    //
-    //                //				median += lidar_distanceArray[lidar_index];
-    //                //				printf("a = %f, d = %d\n", lidar_startAngle,
-    //                lidar_distanceArray[lidar_index]);
-    //            }
-    //
-    //            lidar_distanceArray_Median[(lidar_index / 8)] = sum_num == 0 ? 0xFFFF :
-    //            uint16_t(sum / sum_num);
-    //            //			printf("a = %d, d = %d\n", (lidar_index / 8),
-    //            lidar_distanceArray_Median[(lidar_index / 8)]);
-    //        }
-    //
-    //
-    //    }
 
     int print_wait = 0;
     uint32_t motor_speed = 0;
     uint16_t rpms;
     int lidar_index = 0;
 
+    print_wait = 0;
     while (true) {
         // Wait for asserv tick
         lidarThreadFlag.wait_any(LIDAR_THREAD_FLAG);
         lidar_processing = 1;
 
-        // process
-        print_wait++;
-        if (print_wait > 5) {
-            print_wait = 0;
-            terminal_printf("start sequence received (ov=%d)\n", lidar_overflow);
+        // part of source code from Robotis:
+        // https://github.com/ROBOTIS-GIT/hls_lfcd_lds_driver/blob/master/applications/lds_driver/lds_driver.cpp
+        for (uint16_t i = 0; i < LDS_01_TRAM_LENGTH; i = i + 42) {
+            if (lidar_frame[i] == 0xFA && lidar_frame[i + 1] == (0xA0 + i / 42)) {
+                motor_speed += (lidar_frame[i + 3] << 8) + lidar_frame[i + 2];
+                rpms = (lidar_frame[i + 3] << 8 | lidar_frame[i + 2]) / 10;
 
-            // read data in sets of 6
-            for (uint16_t i = 0; i < LDS_01_TRAM_LENGTH; i = i + 42) {
-                if (lidar_frame[i] == 0xFA && lidar_frame[i + 1] == (0xA0 + i / 42)) //&& CRC check
-                {
-                    motor_speed += (lidar_frame[i + 3] << 8)
-                            + lidar_frame[i + 2]; // accumulate count for avg. time increment
-                    rpms = (lidar_frame[i + 3] << 8 | lidar_frame[i + 2]) / 10;
+                uint32_t sum = 0;
+                uint8_t sum_num = 0;
+                for (uint16_t j = i + 4; j < i + 40; j = j + 6) { // 6 paquets
+                    lidar_index = 6 * (i / 42) + (j - 4 - i) / 6;
 
-                    for (uint16_t j = i + 4; j < i + 40; j = j + 6) {
-                        lidar_index = 6 * (i / 42) + (j - 4 - i) / 6;
+                    uint8_t byte0 = lidar_frame[j];
+                    uint8_t byte1 = lidar_frame[j + 1];
+                    uint8_t byte2 = lidar_frame[j + 2];
+                    uint8_t byte3 = lidar_frame[j + 3];
 
-                        uint8_t byte0 = lidar_frame[j];
-                        uint8_t byte1 = lidar_frame[j + 1];
-                        uint8_t byte2 = lidar_frame[j + 2];
-                        uint8_t byte3 = lidar_frame[j + 3];
+                    uint16_t intensity = (byte1 << 8) + byte0;
+                    uint16_t range = (byte3 << 8) + byte2;
 
-                        uint16_t intensity = (byte1 << 8) + byte0;
-                        uint16_t range = (byte3 << 8) + byte2;
-
-                        if ((359 - lidar_index) < 20) {
-                            terminal_printf(
-                                    "r[%3d, %3d]=%3d\n", 359 - lidar_index, intensity, range);
-                        }
+                    // add to median values
+                    if (range != 0) { // if 0, then probably invalid data, or too far
+                        sum += range;
+                        sum_num++;
                     }
                 }
+
+                // update median
+                lidar_distances_mean[(lidar_index / 6)]
+                        = sum_num == 0 ? 0xFFFF : uint16_t(sum / sum_num);
             }
         }
 
         lidar_processing = 0;
+
+        print_wait++;
+        if (print_wait > 5) {
+            print_wait = 0;
+            for (int i = 0; i < LDS_01_MEDIAN_RES; i++) {
+                terminal_printf("r[%3d]=%3d\n", i, lidar_distances_mean[i]);
+            }
+        }
     }
 }
 
@@ -248,34 +168,6 @@ void updateLidarDetect() {
     //        }
     //    }
 }
-
-// void rxLidarCallback() {
-//
-//     char c;
-//     if (serialLidar.read(&c, 1)) {
-//
-//
-//         if ((start_sequence_incr == 0) && (c == 0xFA)){
-//             start_sequence_incr = 1;
-//         } else if((start_sequence_incr == 1) && (c == 0xA0)){
-//             start_sequence_incr = 0;
-//             lidarThreadFlag.set(LIDAR_THREAD_FLAG);
-//             // setup DMA here
-//
-//             if (lidar_processing) {
-//                 lidar_overflow++;
-//             }
-//
-//         } else {
-//             start_sequence_incr = 0;
-//         }
-//
-//
-////        lidarThreadFlag.set(LIDAR_THREAD_FLAG);
-////        serialLidarEventQueue.call(process_serialLidarTX, c);
-////        lidar_new_value = c;
-//    }
-//}
 
 /* #################################################################################################
  */

@@ -20,7 +20,10 @@ extern uint16_t lidar_overflow, start_sequence_incr;
 #define LDS_01_START_FIRST 0xFA
 #define LDS_01_START_SECOND 0xA0
 #define LDS_01_TRAM_LENGTH 2520
+#define LDS_01_FULL_RES 360
+#define LDS_01_MEDIAN_RES (360 / 6)
 extern uint8_t lidar_frame[LDS_01_TRAM_LENGTH];
+extern uint16_t lidar_distances_mean[LDS_01_MEDIAN_RES];
 
 void init_lidar_serial();
 
