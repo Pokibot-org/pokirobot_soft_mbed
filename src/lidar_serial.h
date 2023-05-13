@@ -7,12 +7,20 @@
 #ifndef POKIROBOT_SOFT_MBED_LIDAR_SERIAL_H
 #define POKIROBOT_SOFT_MBED_LIDAR_SERIAL_H
 
-#include "common.h"
+#include "mbed.h"
 // #include <stm32f4xx_ll_exti.h>
 
-#define LDS_01_TRAM_LENGTH 2518
+// LIDAR Thread
+#define LIDAR_THREAD_FLAG 0x03
+extern EventFlags lidarThreadFlag;
+extern uint8_t lidar_new_value, lidar_processing;
+extern uint16_t lidar_overflow, start_sequence_incr;
 
-extern uint8_t lidar_trame[LDS_01_TRAM_LENGTH];
+// LIDAR Parameters
+#define LDS_01_START_FIRST 0xFA
+#define LDS_01_START_SECOND 0xA0
+#define LDS_01_TRAM_LENGTH 2520
+extern uint8_t lidar_frame[LDS_01_TRAM_LENGTH];
 
 void init_lidar_serial();
 

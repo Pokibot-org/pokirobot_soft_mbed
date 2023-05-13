@@ -5,7 +5,6 @@
  */
 
 #include "RBDC.h"
-#include "common.h"
 #include "lidar_serial.h"
 #include "mbed.h"
 #include "motor_base_pokibot.h"
@@ -178,6 +177,10 @@ void lidarMain() {
     //    }
 
     int print_wait = 0;
+    uint32_t motor_speed = 0;
+    uint16_t rpms;
+    int lidar_index = 0;
+
     while (true) {
         // Wait for asserv tick
         lidarThreadFlag.wait_any(LIDAR_THREAD_FLAG);
@@ -185,9 +188,36 @@ void lidarMain() {
 
         // process
         print_wait++;
-        if (print_wait > 10) {
+        if (print_wait > 5) {
             print_wait = 0;
             terminal_printf("start sequence received (ov=%d)\n", lidar_overflow);
+
+            // read data in sets of 6
+            for (uint16_t i = 0; i < LDS_01_TRAM_LENGTH; i = i + 42) {
+                if (lidar_frame[i] == 0xFA && lidar_frame[i + 1] == (0xA0 + i / 42)) //&& CRC check
+                {
+                    motor_speed += (lidar_frame[i + 3] << 8)
+                            + lidar_frame[i + 2]; // accumulate count for avg. time increment
+                    rpms = (lidar_frame[i + 3] << 8 | lidar_frame[i + 2]) / 10;
+
+                    for (uint16_t j = i + 4; j < i + 40; j = j + 6) {
+                        lidar_index = 6 * (i / 42) + (j - 4 - i) / 6;
+
+                        uint8_t byte0 = lidar_frame[j];
+                        uint8_t byte1 = lidar_frame[j + 1];
+                        uint8_t byte2 = lidar_frame[j + 2];
+                        uint8_t byte3 = lidar_frame[j + 3];
+
+                        uint16_t intensity = (byte1 << 8) + byte0;
+                        uint16_t range = (byte3 << 8) + byte2;
+
+                        if ((359 - lidar_index) < 20) {
+                            terminal_printf(
+                                    "r[%3d, %3d]=%3d\n", 359 - lidar_index, intensity, range);
+                        }
+                    }
+                }
+            }
         }
 
         lidar_processing = 0;

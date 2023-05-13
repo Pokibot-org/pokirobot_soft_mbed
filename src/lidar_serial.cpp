@@ -12,7 +12,7 @@ uint16_t lidar_overflow = 0, start_sequence_incr = 0;
 
 UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_rx;
-uint8_t lidar_trame[LDS_01_TRAM_LENGTH];
+uint8_t lidar_frame[LDS_01_TRAM_LENGTH];
 uint8_t dma_mode = 0;
 
 // General handler for UART Interrupt, need to be linked to NVIC using vector
@@ -35,14 +35,16 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         HAL_UART_Receive_IT(&huart1, &lidar_new_value, 1);
     } else {
 
-        if ((start_sequence_incr == 0) && (lidar_new_value == 0xFA)) {
+        if ((start_sequence_incr == 0) && (lidar_new_value == LDS_01_START_FIRST)) {
             start_sequence_incr = 1;
+            lidar_frame[0] = lidar_new_value;
             HAL_UART_Receive_IT(&huart1, &lidar_new_value, 1);
-        } else if ((start_sequence_incr == 1) && (lidar_new_value == 0xA0)) {
+        } else if ((start_sequence_incr == 1) && (lidar_new_value == LDS_01_START_SECOND)) {
             start_sequence_incr = 0;
+            lidar_frame[1] = lidar_new_value;
             //            lidarThreadFlag.set(LIDAR_THREAD_FLAG);
-            // setup DMA here
-            HAL_UART_Receive_DMA(&huart1, lidar_trame, LDS_01_TRAM_LENGTH);
+            // setup DMA to get the rest of the message
+            HAL_UART_Receive_DMA(&huart1, lidar_frame + 2, LDS_01_TRAM_LENGTH - 2);
             dma_mode = 1;
 
             if (lidar_processing) {
