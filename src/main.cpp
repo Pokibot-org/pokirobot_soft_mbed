@@ -5,6 +5,7 @@
  */
 
 #include "RBDC.h"
+#include "lidar_serial.h"
 #include "mbed.h"
 #include "motor_base_pokibot.h"
 #include "motor_sensor_AS5047p.h"
@@ -17,7 +18,7 @@ DigitalOut led_out_red(PB_4);
 DigitalIn user_button(BUTTON1);
 
 // Set up printf over STLINK
-static UnbufferedSerial terminal(CONSOLE_TX, CONSOLE_RX, 115200);
+static UnbufferedSerial terminal(CONSOLE_TX, CONSOLE_RX, 921600);
 Thread terminalThread(osPriorityBelowNormal, OS_STACK_SIZE * 4);
 EventQueue terminalEventQueue;
 static char terminal_shell_buff[200];
@@ -77,6 +78,13 @@ sixtron::MotorBasePokibot *basePokibot;
 // #define PID_TETA_PRECISION  0.0872665f // 5°
 #define PID_TETA_PRECISION 0.017453f // 1°
 #define PID_DV_PRECISION 0.005f // 0.5 cm
+
+// LIDAR
+// UnbufferedSerial serialLidar(PA_9, PA_10, 230400);
+Thread lidarThread(osPriorityAboveNormal, OS_STACK_SIZE);
+
+/* #################################################################################################
+ */
 
 /* #################################################################################################
  */
@@ -154,7 +162,7 @@ void control() {
         controlThreadFlag.wait_any(CONTROL_THREAD_FLAG);
 
         // Update standby mode
-        if (user_button.read() == 1) {
+        if ((user_button.read() == 1) || (lidar_back_trig) || (lidar_front_trig)) {
             rbdc_poki->stop();
         } else {
             rbdc_poki->start();
@@ -257,11 +265,13 @@ int main() {
     terminalThread.start(callback(&terminalEventQueue, &EventQueue::dispatch_forever));
     terminal.attach(&rxTerminalCallback);
 
+    // Setup Lidar
+    lidarThread.start(lidarMain);
+
     // Done init
     led_out_red = 0;
     led_out_green = 1;
     terminal_printf("Init Done.\n");
-    terminal_printf("\n> ");
 
     while (true) {
         mainThreadFlag.wait_any(MAIN_THREAD_FLAG);
