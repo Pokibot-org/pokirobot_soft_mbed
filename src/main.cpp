@@ -4,30 +4,28 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
+#include "common.h"
 #include "RBDC.h"
 #include "lidar_serial.h"
-#include "mbed.h"
 #include "motor_base_pokibot.h"
 #include "motor_sensor_AS5047p.h"
 #include "odometry_pokibot.h"
 
 // Blinking rate in milliseconds
 #define BLINKING_RATE 100ms
-DigitalOut led_out_green(PC_8);
-DigitalOut led_out_red(PB_4);
+DigitalOut led_out_green(LED_GREEN);
+DigitalOut led_out_red(LED_RED);
 DigitalIn user_button(BUTTON1);
 
 // Set up printf over STLINK
 static UnbufferedSerial terminal(CONSOLE_TX, CONSOLE_RX, 921600);
-Thread terminalThread(osPriorityBelowNormal, OS_STACK_SIZE * 4);
+Thread terminalThread(osPriorityBelowNormal, OS_STACK_SIZE);
 EventQueue terminalEventQueue;
 static char terminal_shell_buff[200];
 
 FileHandle *mbed::mbed_override_console(int fd) {
     return &terminal;
 }
-
-void terminal_printf(const char *fmt, ...);
 
 /* #################################################################################################
  */
@@ -64,7 +62,7 @@ string rbdc_status[6] = {
 #define MOTOR_REDUCTION 50
 #define ENC_WHEEL_RADIUS (0.07f / 2.0f)
 #define ENC_WHEELS_DISTANCE (0.315f)
-SPI spiAS5047p(PA_7, PA_6, PA_5); // mosi, miso, sclk
+SPI spiAS5047p(ENC_MOSI, ENC_MISO, ENC_SCK); // mosi, miso, sclk
 
 // ODOMETRY
 sixtron::MotorSensorAS5047P *sensorLeft;
@@ -110,7 +108,7 @@ void control() {
 
     // create encoders
     sensorLeft = new sixtron::MotorSensorAS5047P(&spiAS5047p,
-            PA_8,
+            ENC_CS_LEFT,
             dt_pid,
             ENC_RESOLUTION,
             ENC_RESOLUTION * MOTOR_REDUCTION,
@@ -118,7 +116,7 @@ void control() {
             DIR_INVERTED);
 
     sensorRight = new sixtron::MotorSensorAS5047P(&spiAS5047p,
-            PB_2,
+            ENC_CS_RIGHT,
             dt_pid,
             ENC_RESOLUTION,
             ENC_RESOLUTION * MOTOR_REDUCTION,
@@ -222,10 +220,10 @@ void control() {
 void terminal_printf(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    vsprintf(terminal_shell_buff, fmt, args);
+    int length = vsprintf(terminal_shell_buff, fmt, args);
     va_end(args);
 
-    terminal.write(terminal_shell_buff, strlen(terminal_shell_buff));
+    terminal.write(terminal_shell_buff, length);
 }
 
 void process_terminalTX(char carac) {

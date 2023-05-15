@@ -5,6 +5,7 @@
  */
 
 #include "lidar_serial.h"
+#include "common.h"
 
 EventFlags lidarThreadFlag;
 uint8_t lidar_new_value, lidar_processing;
