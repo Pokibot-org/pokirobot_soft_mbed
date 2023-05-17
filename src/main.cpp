@@ -4,18 +4,20 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-#include "common.h"
 #include "RBDC.h"
+#include "common.h"
 #include "lidar_serial.h"
 #include "motor_base_pokibot.h"
 #include "motor_sensor_AS5047p.h"
 #include "odometry_pokibot.h"
+#include "servo.h"
 
 // Blinking rate in milliseconds
 #define BLINKING_RATE 100ms
 DigitalOut led_out_green(LED_GREEN);
 DigitalOut led_out_red(LED_RED);
 DigitalIn user_button(BUTTON1);
+DigitalIn tirette(TIRETTE);
 
 // Set up printf over STLINK
 static UnbufferedSerial terminal(CONSOLE_TX, CONSOLE_RX, 921600);
@@ -56,6 +58,8 @@ string rbdc_status[6] = {
     "RBDC_moving_&_angle",
     "RBDC_correct_i_angle",
 };
+volatile int rbdc_result = sixtron::RBDC_status::RBDC_standby;
+volatile int deactivate_lidar_front = 0;
 
 // ENCODERS
 #define ENC_RESOLUTION 16384
@@ -152,6 +156,7 @@ void control() {
             basePokibot,
             rbdc_poki_params); // will init odom and robot base as well
     sixtron::position target_pos;
+    rbdc_poki->setTarget(0.0f, 0.0f, 0.0f);
 
     int square_state = 0;
 
@@ -160,54 +165,69 @@ void control() {
         controlThreadFlag.wait_any(CONTROL_THREAD_FLAG);
 
         // Update standby mode
-        if ((user_button.read() == 1) || (lidar_back_trig) || (lidar_front_trig)) {
-            rbdc_poki->stop();
+//        if ((user_button.read() == 1) || (lidar_back_trig) || (lidar_front_trig)) {
+//            rbdc_poki->pause();
+//        } else {
+//            rbdc_poki->start();
+//        }
+//
+        if(!deactivate_lidar_front){
+            if ((lidar_back_trig) || (lidar_front_trig)) {
+                rbdc_poki->pause();
+            } else {
+                rbdc_poki->start();
+            }
         } else {
-            rbdc_poki->start();
+            if ((lidar_back_trig)) {
+                rbdc_poki->pause();
+            } else {
+                rbdc_poki->start();
+            }
+
         }
 
         // Update Target
-        target_pos.x = robot_target_X;
-        target_pos.y = robot_target_Y;
-        target_pos.theta = robot_target_theta;
-        rbdc_poki->setTarget(target_pos);
+        //        target_pos.x = robot_target_X;
+        //        target_pos.y = robot_target_Y;
+        //        target_pos.theta = robot_target_theta;
+        //        rbdc_poki->setTarget(target_pos);
 
         // Update RBDC
-        int rbdc_result = rbdc_poki->update();
+        rbdc_result = rbdc_poki->update();
 
         // Do a square indefinitely
-        if (rbdc_result == sixtron::RBDC_status::RBDC_done) {
-            square_state++;
-
-            switch (square_state) {
-                case 1:
-                    robot_target_X = 0.0f;
-                    robot_target_Y = 0.0f;
-                    robot_target_theta = 0.0f;
-                    break;
-                case 2:
-                    robot_target_X = 0.5f;
-                    robot_target_Y = 0.0f;
-                    robot_target_theta = -1.57f;
-                    break;
-                case 3:
-                    robot_target_X = 0.5f;
-                    robot_target_Y = -0.5f;
-                    robot_target_theta = -3.14f;
-                    break;
-                case 4:
-                    robot_target_X = 0.0f;
-                    robot_target_Y = -0.5f;
-                    robot_target_theta = +1.57f;
-                    break;
-                default:
-                    robot_target_X = 0.0f;
-                    robot_target_Y = 0.0f;
-                    robot_target_theta = 0.0f;
-                    square_state = 1;
-                    break;
-            }
-        }
+        //        if (rbdc_result == sixtron::RBDC_status::RBDC_done) {
+        //            square_state++;
+        //
+        //            switch (square_state) {
+        //                case 1:
+        //                    robot_target_X = 0.0f;
+        //                    robot_target_Y = 0.0f;
+        //                    robot_target_theta = 0.0f;
+        //                    break;
+        //                case 2:
+        //                    robot_target_X = 0.5f;
+        //                    robot_target_Y = 0.0f;
+        //                    robot_target_theta = -1.57f;
+        //                    break;
+        //                case 3:
+        //                    robot_target_X = 0.5f;
+        //                    robot_target_Y = -0.5f;
+        //                    robot_target_theta = -3.14f;
+        //                    break;
+        //                case 4:
+        //                    robot_target_X = 0.0f;
+        //                    robot_target_Y = -0.5f;
+        //                    robot_target_theta = +1.57f;
+        //                    break;
+        //                default:
+        //                    robot_target_X = 0.0f;
+        //                    robot_target_Y = 0.0f;
+        //                    robot_target_theta = 0.0f;
+        //                    square_state = 1;
+        //                    break;
+        //            }
+        //        }
 
         // Update time passed in control loop
         time_passed += dt_pid;
@@ -258,6 +278,7 @@ int main() {
     // Setup asserv update
     controlThread.start(control);
     controlThreadTicker.attach(&controlThreadUpdate, CONTROL_THREAD_RATE);
+    ThisThread::sleep_for(1000ms);
 
     // Setup Serial Thread
     terminalThread.start(callback(&terminalEventQueue, &EventQueue::dispatch_forever));
@@ -271,11 +292,55 @@ int main() {
     led_out_green = 1;
     terminal_printf("Init Done.\n");
 
+    // Servo
+    servosTimerInit();
+    servoSetPwmDuty(SERVO0,1500);
+
+    while (tirette);
+
+    deactivate_lidar_front = 1;
+    rbdc_poki->setTarget(0.35f, 0.0f, 0.0f);
+    ThisThread::sleep_for(100ms);
+    while(rbdc_result != sixtron::RBDC_status::RBDC_done);
+
+    ThisThread::sleep_for(3s);
+    servoSetPwmDuty(SERVO0,3500);
+    ThisThread::sleep_for(6s);
+
+    rbdc_poki->setTarget(0.30f, 0.0f, 0.0f);
+    ThisThread::sleep_for(100ms);
+    while(rbdc_result != sixtron::RBDC_status::RBDC_done);
+
+    rbdc_poki->setTarget(0.50f, 0.0f, 0.0f);
+    ThisThread::sleep_for(100ms);
+    while(rbdc_result != sixtron::RBDC_status::RBDC_done);
+
+    rbdc_poki->setTarget(0.45f, 0.0f, 0.0f);
+    ThisThread::sleep_for(100ms);
+    while(rbdc_result != sixtron::RBDC_status::RBDC_done);
+
+    rbdc_poki->setTarget(0.60f, 0.0f, 0.0f);
+    ThisThread::sleep_for(100ms);
+    while(rbdc_result != sixtron::RBDC_status::RBDC_done);
+
+    rbdc_poki->setTarget(-0.5f, 0.0f, 0.0f);
+    ThisThread::sleep_for(100ms);
+    while(rbdc_result != sixtron::RBDC_status::RBDC_done);
+
+
     while (true) {
         mainThreadFlag.wait_any(MAIN_THREAD_FLAG);
 
-        led_out_red = !!user_button.read();
+//        servoSetPwmDuty(SERVO0,1000);
+//
+//        ThisThread::sleep_for(1s);
+//
+//        servoSetPwmDuty(SERVO0,3500);
+//
+//        ThisThread::sleep_for(1s);
 
-        time_passed += time_incr;
+        //        led_out_red = !!user_button.read();
+        //
+        //        time_passed += time_incr;
     }
 }
