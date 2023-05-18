@@ -268,6 +268,7 @@ void control() {
             led_out_green = 0;
         } else if (current_mode == robot_mode::return_to_base) {
             //            block_side = NOT_MOVING;
+            ignore_lidar = 0;
             rbdc_poki->start();
             rbdc_poki->setTarget(0.0f, 0.0f, 0.0f);
         }
@@ -409,10 +410,13 @@ int main() {
     //            "Après reset : %3.3f, %3.3f, %3.3f\n", odom->getX(), odom->getY(),
     //            odom->getTheta());
 
-    float angle_bug = 0.08f;
+//    float angle_bug = 0.08f;
 
     // On recule et on sort de la zone, on pousse des palets jusqu'à la prochaine assiette, petite
     // correction d'angle au passage
+
+    robot_goto(-0.34f, 0.00f, 0.80f);
+
     robot_goto(-1.6f, 0.05f, 0.0f);
     robot_set_score(35);
 
