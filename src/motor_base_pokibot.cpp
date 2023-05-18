@@ -37,7 +37,22 @@ namespace sixtron {
         _motorLeft->setSpeed(_targetSpeedMotorLeft);
         _motorRight->setSpeed(_targetSpeedMotorRight);
 
-        _motorLeft->update();
+        if ((_targetSpeedMotorLeft > 0.0f && _targetSpeedMotorRight < 0.0f)
+                || (_targetSpeedMotorLeft < 0.0f && _targetSpeedMotorRight > 0.0f)){
+            _running_side = TURNING_ON_ITSLEF;
+        } else if (_targetSpeedMotorLeft >= 0.0f && _targetSpeedMotorRight >= 0.0f){
+            _running_side = RUNNING_FRONT;
+        } else if (_targetSpeedMotorLeft < 0.0f && _targetSpeedMotorRight < 0.0f){
+            _running_side = RUNNING_BACK;
+        } else {
+            _running_side = NOT_MOVING;
+        }
+
+            _motorLeft->update();
         _motorRight->update();
+    }
+
+    int MotorBasePokibot::get_running_side() {
+        return _running_side;
     }
 }

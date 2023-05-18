@@ -19,6 +19,11 @@ namespace sixtron {
 #define ENC_WHEELS_DISTANCE (0.315f)
 #define MAX_MOTOR_PWM 0.4f // With MBED, pwm command between -1.0f and +1.0f max !
 
+#define NOT_MOVING 0
+#define RUNNING_FRONT 1
+#define RUNNING_BACK 2
+#define TURNING_ON_ITSLEF 3
+
     class MotorBasePokibot: public MotorBaseTwoWheels {
 
     public:
@@ -37,8 +42,12 @@ namespace sixtron {
         // Specific for Pokibot.
         void update() override;
 
+        int get_running_side();
+
     private:
         float _dt_pid; // in [s]
+
+        int _running_side;
 
         MotorSensorEncoder *_sensorLeft;
         MotorSensorEncoder *_sensorRight;
