@@ -28,9 +28,9 @@ static char terminal_shell_buff[200];
 //
 static UnbufferedSerial afficheur(SEG7_RX, SEG7_TX, 9600);
 
+static Timeout ending;
 
-Timeout ending;
-//Ticker ending;
+// Ticker ending;
 
 FileHandle *mbed::mbed_override_console(int fd) {
     return &terminal;
@@ -67,6 +67,7 @@ string rbdc_status[6] = {
 };
 volatile int rbdc_result = sixtron::RBDC_status::RBDC_standby;
 volatile int deactivate_lidar_front = 0;
+volatile int STOP_NOW = 0;
 
 // ENCODERS
 #define ENC_RESOLUTION 16384
@@ -157,7 +158,7 @@ void control() {
     rbdc_poki_params.pid_param_dv.Kp = 1.6f;
     rbdc_poki_params.pid_param_dv.Ki = 0.001f;
     rbdc_poki_params.pid_param_dv.Kd = 0.0f;
-    //    rbdc_poki_params.pid_param_dv.ramp = 0.5f * dt_pid;
+        rbdc_poki_params.pid_param_dv.ramp = 0.2f * dt_pid;
 
     rbdc_poki = new sixtron::RBDC(odom,
             basePokibot,
@@ -190,6 +191,12 @@ void control() {
             } else {
                 rbdc_poki->start();
             }
+        }
+
+        if (STOP_NOW) {
+            rbdc_poki->stop();
+            led_out_red = 1;
+            led_out_green = 0;
         }
 
         // Update Target
@@ -277,14 +284,23 @@ void robot_goto(float x,
         ;
 }
 
+char affich_buff[20];
+void robot_set_score(int score){
 
-void end_process()
-{
-    deactivate_lidar_front = 0;
-    robot_goto(0.0f, 0.0f, 0.0f);
+    int length_score = sprintf(affich_buff, "SET SCOR %d\r\n", score);
+    afficheur.write(affich_buff, length_score);
+    afficheur.write(affich_buff, length_score);
+    afficheur.write(affich_buff, length_score);
+}
 
-    led_out_red = 1;
-    led_out_green = 0;
+void end_process() {
+
+    STOP_NOW = 1;
+    //    deactivate_lidar_front = 0;
+    //    robot_goto(0.0f, 0.0f, 0.0f);
+    //
+    //    led_out_red = 1;
+    //    led_out_green = 0;
 }
 
 int main() {
@@ -326,14 +342,9 @@ int main() {
     while (tirette)
         ;
 
-    char affich_buff[100];
-    int length_score = sprintf(affich_buff, "SET SCOR 38\r\n");
-    afficheur.write(affich_buff, length_score);
-    afficheur.write(affich_buff, length_score);
-    afficheur.write(affich_buff, length_score);
+    ending.attach(&end_process, 100s);
 
-
-//    ending.attach(&end_process, 80s);
+    robot_set_score(0);
 
     // On est au fond de la zone, on avance pour aller gerber les balles
     deactivate_lidar_front = 1;
@@ -343,6 +354,7 @@ int main() {
     ThisThread::sleep_for(1s);
     servoSetPwmDuty(SERVO0, 3500);
     ThisThread::sleep_for(3s);
+    robot_set_score(20);
 
     // on recule un peu et on fonce dans le mur pour faire tomber les balles x2
     robot_goto(-0.05f, 0.0f, 0.0f, sixtron::RBDC_reference::relative);
@@ -351,29 +363,38 @@ int main() {
     robot_goto(-0.05f, 0.0f, 0.0f, sixtron::RBDC_reference::relative);
     robot_goto(0.25f, 0.0f, 0.0f, sixtron::RBDC_reference::relative);
 
-
+    // on se remet un peu mieux sur la zone de départ avant de reset
+    robot_goto(-0.05f, 0.0f, 0.0f, sixtron::RBDC_reference::relative);
 
     // on reset l'odom
-//    rbdc_poki->setAbsolutePosition(0.0f, 0.0f, 0.0f);
-    sixtron::position absolute_pos;
-    absolute_pos.x = 0.0f;
-    absolute_pos.y =0.0f;
-    absolute_pos.theta = 0.0f;
-    rbdc_poki->stop();
-    ThisThread::sleep_for(100ms);
-    odom->setPos(absolute_pos);
-    ThisThread::sleep_for(100ms);
-    rbdc_poki->cancel();
-    ThisThread::sleep_for(100ms);
-    rbdc_poki->start();
+    rbdc_poki->setAbsolutePosition(0.0f, 0.0f, 0.0);
     ThisThread::sleep_for(200ms);
+    rbdc_poki->setAbsolutePosition(0.0f, 0.0f, 0.0);
+    ThisThread::sleep_for(200ms);
+//
+//    float bug_theta = odom->getTheta();
+//    // on se remet un peu mieux sur la zone de départ avant de reset
+//    robot_goto(0.0f, 0.0f, -bug_theta, sixtron::RBDC_reference::relative);
 
-    // On recule et on sort de la zone, on pousse des palets jusqu'à la prochaine assiette
-    robot_goto(-1.6f, 0.0f, 0.0f, sixtron::RBDC_reference::relative);
+//    terminal_printf(
+//            "Après reset : %3.3f, %3.3f, %3.3f\n", odom->getX(), odom->getY(), odom->getTheta());
+
+    float angle_bug = 0.08f;
+
+    // On recule et on sort de la zone, on pousse des palets jusqu'à la prochaine assiette, petite correction d'angle au passage
+    robot_goto(-1.6f, 0.05f, 0.0f);
+    robot_set_score(35);
+
+    // On sort de a deuxième assiète, pour pouvoir compter les points palets
+    robot_goto(0.25f, 0.0f, 0.0f, sixtron::RBDC_reference::relative);
+    robot_set_score(26);
 
     // On revient à la zone de départ
     deactivate_lidar_front = 0;
-    robot_goto(+2.0f, 0.0f, 0.0f, sixtron::RBDC_reference::relative);
+    robot_goto(-0.3f, 0.0f, 0.0f);
+    deactivate_lidar_front = 1;
+    robot_goto(+0.2f, 0.0f, 0.0f);
+    robot_set_score(41);
 
     while (true) {
         mainThreadFlag.wait_any(MAIN_THREAD_FLAG);
