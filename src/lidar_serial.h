@@ -31,7 +31,7 @@
 #define LIDAR_FRONT_MIN 12
 #define LIDAR_FRONT_MAX 18
 
-extern uint8_t lidar_back_trig, lidar_front_trig;
+extern volatile uint8_t lidar_back_trig, lidar_front_trig;
 
 void lidarMain();
 void init_lidar_serial();

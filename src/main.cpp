@@ -109,7 +109,7 @@ typedef enum {
 } robot_mode;
 
 volatile robot_mode current_mode = standby;
-volatile int ignore_lidar = 0;
+volatile bool ignore_lidar = false;
 
 static Timeout ending;
 static Timeout returning_to_base;
@@ -129,6 +129,30 @@ void mainThreadUpdate() {
 
 void controlThreadUpdate() {
     controlThreadFlag.set(CONTROL_THREAD_FLAG);
+}
+
+//static inline void
+//#define checkLidar(){ \
+//        if (!ignore_lidar) { \
+//        int current_moving_side = rbdc_poki->getRunningDirection();\
+//        if ((current_moving_side == RBDC_DIR_FORWARD) && lidar_front_trig) {\
+//            rbdc_poki->pause();\
+//        } else if ((current_moving_side == RBDC_DIR_BACKWARD) && lidar_back_trig) {\
+//            rbdc_poki->pause();\
+//        }
+//    }
+//}
+
+void checkLidar(){
+    if (!ignore_lidar) {
+        int current_moving_side = rbdc_poki->getRunningDirection();
+
+        if ((current_moving_side == RBDC_DIR_FORWARD) && lidar_front_trig) {
+            rbdc_poki->pause();
+        } else if ((current_moving_side == RBDC_DIR_BACKWARD) && lidar_back_trig) {
+            rbdc_poki->pause();
+        }
+    }
 }
 
 void control() {
@@ -209,31 +233,32 @@ void control() {
 
         /// CHECKING LIDAR
         // Update standby mode if lidar is triggered
-        if (current_mode != robot_mode::stop_now) {
-
-            rbdc_poki->start();
-
-            if (!ignore_lidar) {
-                current_moving_side = rbdc_poki->getRunningDirection();
-
-                //                if (wait_printf > 100) {
-                //                    wait_printf = 0;
-                //                    terminal_printf("side=%d (front %d back %d)\n",
-                //                            current_moving_side,
-                //                            lidar_front_trig,
-                //                            lidar_back_trig);
-                //                } else {
-                //                    wait_printf++;
-                //                }
-
-                if ((current_moving_side == RBDC_DIR_FORWARD) && lidar_front_trig) {
-                    rbdc_poki->pause();
-                    //                    block_side = RUNNING_FRONT;
-                } else if ((current_moving_side == RBDC_DIR_BACKWARD) && lidar_back_trig) {
-                    rbdc_poki->pause();
-                    //                    block_side = RUNNING_BACK;
-                }
-            }
+//        if (current_mode != robot_mode::stop_now) {
+//
+//            rbdc_poki->start();
+//
+//            checkLidar();
+//            if (!ignore_lidar) {
+//                current_moving_side = rbdc_poki->getRunningDirection();
+//
+//                //                if (wait_printf > 100) {
+//                //                    wait_printf = 0;
+//                //                    terminal_printf("side=%d (front %d back %d)\n",
+//                //                            current_moving_side,
+//                //                            lidar_front_trig,
+//                //                            lidar_back_trig);
+//                //                } else {
+//                //                    wait_printf++;
+//                //                }
+//
+//                if ((current_moving_side == RBDC_DIR_FORWARD) && lidar_front_trig) {
+//                    rbdc_poki->pause();
+//                    //                    block_side = RUNNING_FRONT;
+//                } else if ((current_moving_side == RBDC_DIR_BACKWARD) && lidar_back_trig) {
+//                    rbdc_poki->pause();
+//                    //                    block_side = RUNNING_BACK;
+//                }
+//            }
 
             //            if ((current_moving_side == RUNNING_FRONT) && lidar_front_trig) {
             //                rbdc_poki->pause();
@@ -259,7 +284,7 @@ void control() {
             //        } else if ((ignore_lidar) && (current_mode != robot_mode::stop_now)) {
             //            rbdc_poki->start();
             //        }
-        }
+//        }
 
         /// CHECKING MODE
         if (current_mode == robot_mode::stop_now) {
@@ -267,10 +292,15 @@ void control() {
             led_out_red = 1;
             led_out_green = 0;
         } else if (current_mode == robot_mode::return_to_base) {
-            //            block_side = NOT_MOVING;
-            ignore_lidar = 0;
             rbdc_poki->start();
+            ignore_lidar = false;
+            checkLidar();
             rbdc_poki->setTarget(0.0f, 0.0f, 0.0f);
+        } else if (current_mode == robot_mode::match_run) {
+            rbdc_poki->start();
+            checkLidar();
+        } else if (current_mode == robot_mode::recover_from_block){
+
         }
 
         // Update RBDC
@@ -330,7 +360,7 @@ void end_process() {
 int main() {
 
     // Begin init
-    current_mode = standby;
+    current_mode = robot_mode::standby;
     led_out_green = 0;
     led_out_red = 1;
     terminal_printf("\nInit...\n");
@@ -364,11 +394,11 @@ int main() {
     servosTimerInit();
     servoSetPwmDuty(SERVO0, 1500);
 
-    // Set current robot mode
-    current_mode = match_run;
-
     while (tirette)
         ;
+
+    // Set current robot mode
+    current_mode = robot_mode::match_run;
 
     returning_to_base.attach(&return_base_process, 80s);
     ending.attach(&end_process, 98s);
@@ -376,7 +406,7 @@ int main() {
     robot_set_score(0);
 
     // On est au fond de la zone, on avance pour aller gerber les balles
-    ignore_lidar = 1;
+    ignore_lidar = true;
     robot_goto(0.35f, 0.0f, 0.0f, sixtron::RBDC_reference::relative);
 
     // On lache les balles
@@ -416,7 +446,7 @@ int main() {
     // correction d'angle au passage
     robot_goto(-0.34f, 0.00f, 0.80f);
     robot_goto(-0.34f, 0.00f, 0.00f);
-    ignore_lidar = 0;
+    ignore_lidar = false;
 
     robot_goto(-1.6f, 0.05f, 0.0f);
     robot_set_score(35);
@@ -426,11 +456,12 @@ int main() {
     robot_set_score(26);
 
     // On revient à la zone de départ
-    ignore_lidar = 0;
+    ignore_lidar = false;
     robot_goto(-0.3f, 0.0f, 0.0f);
-    ignore_lidar = 1;
+    ignore_lidar = true;
     robot_goto(+0.2f, 0.0f, 0.0f);
     robot_set_score(41);
+    ignore_lidar = false;
 
     while (true) {
         mainThreadFlag.wait_any(MAIN_THREAD_FLAG);

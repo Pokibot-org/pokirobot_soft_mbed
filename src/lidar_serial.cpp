@@ -16,7 +16,7 @@ DMA_HandleTypeDef hdma_usart1_rx;
 uint8_t lidar_frame[LDS_01_TRAM_LENGTH];
 uint16_t lidar_distances_mean[LDS_01_MEDIAN_RES];
 uint8_t dma_mode = 0;
-uint8_t lidar_back_trig = 0, lidar_front_trig = 0;
+volatile uint8_t lidar_back_trig = 0, lidar_front_trig = 0;
 
 // General handler for UART Interrupt, need to be linked to NVIC using vector
 // See https://os.mbed.com/forum/mbed/topic/33580/
@@ -178,21 +178,25 @@ void lidarMain() {
 
 void updateLidarDetect() {
 
+    uint8_t buff_trig_front = 0, buff_trig_back = 0;
+
     // back
     for (int index = LIDAR_BACK_MIN; index < LIDAR_BACK_MAX; index++) {
-        lidar_back_trig = 0;
         if (lidar_distances_mean[index] < LIDAR_TRIG_DETECT) {
-            lidar_back_trig = 1;
+            buff_trig_back = 1;
             break;
         }
     }
 
     // front
     for (int index = LIDAR_FRONT_MIN; index < LIDAR_FRONT_MAX; index++) {
-        lidar_front_trig = 0;
         if (lidar_distances_mean[index] < LIDAR_TRIG_DETECT) {
-            lidar_front_trig = 1;
+            buff_trig_front = 1;
             break;
         }
     }
+
+    lidar_back_trig = buff_trig_back;
+    lidar_front_trig = buff_trig_front;
+
 }
