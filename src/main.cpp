@@ -400,7 +400,7 @@ int main() {
     ThisThread::sleep_for(200ms);
     rbdc_poki->setAbsolutePosition(0.0f, 0.0f, 0.0);
     ThisThread::sleep_for(200ms);
-    ignore_lidar = 0;
+
     //
     //    float bug_theta = odom->getTheta();
     //    // on se remet un peu mieux sur la zone de départ avant de reset
@@ -416,6 +416,8 @@ int main() {
     // correction d'angle au passage
 
     robot_goto(-0.34f, 0.00f, 0.80f);
+    robot_goto(-0.34f, 0.00f, 0.00f);
+    ignore_lidar = 0;
 
     robot_goto(-1.6f, 0.05f, 0.0f);
     robot_set_score(35);
