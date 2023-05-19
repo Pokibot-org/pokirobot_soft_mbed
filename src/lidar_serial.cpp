@@ -198,5 +198,4 @@ void updateLidarDetect() {
 
     lidar_back_trig = buff_trig_back;
     lidar_front_trig = buff_trig_front;
-
 }

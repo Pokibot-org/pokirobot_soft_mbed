@@ -64,6 +64,6 @@
 
 
 #include "mbed.h"
-extern void terminal_printf(const char *fmt, ...);
+void terminal_printf(const char *fmt, ...);
 
 #endif

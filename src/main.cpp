@@ -131,19 +131,7 @@ void controlThreadUpdate() {
     controlThreadFlag.set(CONTROL_THREAD_FLAG);
 }
 
-//static inline void
-//#define checkLidar(){ \
-//        if (!ignore_lidar) { \
-//        int current_moving_side = rbdc_poki->getRunningDirection();\
-//        if ((current_moving_side == RBDC_DIR_FORWARD) && lidar_front_trig) {\
-//            rbdc_poki->pause();\
-//        } else if ((current_moving_side == RBDC_DIR_BACKWARD) && lidar_back_trig) {\
-//            rbdc_poki->pause();\
-//        }
-//    }
-//}
-
-void checkLidar(){
+void checkLidar() {
     if (!ignore_lidar) {
         int current_moving_side = rbdc_poki->getRunningDirection();
 
@@ -211,80 +199,9 @@ void control() {
     sixtron::position target_pos;
     rbdc_poki->setTarget(0.0f, 0.0f, 0.0f);
 
-    int square_state = 0;
-    int current_moving_side = NOT_MOVING;
-    int wait_printf = 0;
-
-    static int block_side = NOT_MOVING;
-
     while (true) {
         // Wait for asserv tick
         controlThreadFlag.wait_any(CONTROL_THREAD_FLAG);
-
-        //        if (wait_printf > 100) {
-        //            wait_printf = 0;
-        //            terminal_printf("side=%d (front %d back %d)\n",
-        //                    current_moving_side,
-        //                    lidar_front_trig,
-        //                    lidar_back_trig);
-        //        } else {
-        //            wait_printf++;
-        //        }
-
-        /// CHECKING LIDAR
-        // Update standby mode if lidar is triggered
-//        if (current_mode != robot_mode::stop_now) {
-//
-//            rbdc_poki->start();
-//
-//            checkLidar();
-//            if (!ignore_lidar) {
-//                current_moving_side = rbdc_poki->getRunningDirection();
-//
-//                //                if (wait_printf > 100) {
-//                //                    wait_printf = 0;
-//                //                    terminal_printf("side=%d (front %d back %d)\n",
-//                //                            current_moving_side,
-//                //                            lidar_front_trig,
-//                //                            lidar_back_trig);
-//                //                } else {
-//                //                    wait_printf++;
-//                //                }
-//
-//                if ((current_moving_side == RBDC_DIR_FORWARD) && lidar_front_trig) {
-//                    rbdc_poki->pause();
-//                    //                    block_side = RUNNING_FRONT;
-//                } else if ((current_moving_side == RBDC_DIR_BACKWARD) && lidar_back_trig) {
-//                    rbdc_poki->pause();
-//                    //                    block_side = RUNNING_BACK;
-//                }
-//            }
-
-            //            if ((current_moving_side == RUNNING_FRONT) && lidar_front_trig) {
-            //                rbdc_poki->pause();
-            //                block_side = RUNNING_FRONT;
-            //            } else if ((current_moving_side == RUNNING_BACK) && lidar_back_trig) {
-            //                rbdc_poki->pause();
-            //                block_side = RUNNING_BACK;
-            //            } else { // should restart when NOT_MOVING, so this will unstuck robot
-            //                if ((block_side == RUNNING_FRONT) && !lidar_front_trig) {
-            //                    rbdc_poki->start();
-            //                    block_side = NOT_MOVING;
-            //                } else if ((block_side == RUNNING_BACK) && !lidar_back_trig) {
-            //                    rbdc_poki->start();
-            //                    block_side = NOT_MOVING;
-            //                }
-            //            }
-            //
-            //            if ((lidar_back_trig) || (lidar_front_trig)) {
-            //                rbdc_poki->pause();
-            //            } else {
-            //                rbdc_poki->start();
-            //            }
-            //        } else if ((ignore_lidar) && (current_mode != robot_mode::stop_now)) {
-            //            rbdc_poki->start();
-            //        }
-//        }
 
         /// CHECKING MODE
         if (current_mode == robot_mode::stop_now) {
@@ -299,8 +216,7 @@ void control() {
         } else if (current_mode == robot_mode::match_run) {
             rbdc_poki->start();
             checkLidar();
-        } else if (current_mode == robot_mode::recover_from_block){
-
+        } else if (current_mode == robot_mode::recover_from_block) {
         }
 
         // Update RBDC
@@ -431,17 +347,6 @@ int main() {
     rbdc_poki->setAbsolutePosition(0.0f, 0.0f, 0.0);
     ThisThread::sleep_for(200ms);
 
-    //
-    //    float bug_theta = odom->getTheta();
-    //    // on se remet un peu mieux sur la zone de départ avant de reset
-    //    robot_goto(0.0f, 0.0f, -bug_theta, sixtron::RBDC_reference::relative);
-
-    //    terminal_printf(
-    //            "Après reset : %3.3f, %3.3f, %3.3f\n", odom->getX(), odom->getY(),
-    //            odom->getTheta());
-
-//    float angle_bug = 0.08f;
-
     // On recule et on sort de la zone, on pousse des palets jusqu'à la prochaine assiette, petite
     // correction d'angle au passage
     robot_goto(-0.34f, 0.00f, 0.80f);
@@ -466,21 +371,6 @@ int main() {
     while (true) {
         mainThreadFlag.wait_any(MAIN_THREAD_FLAG);
 
-        //        servoSetPwmDuty(SERVO0,1000);
-        //
-        //        ThisThread::sleep_for(1s);
-        //
-        //        servoSetPwmDuty(SERVO0,3500);
-        //
-        //        ThisThread::sleep_for(1s);
-
-        //        led_out_red = !!user_button.read();
-        //
-        //        time_passed += time_incr;
-
-        //        rbdc_poki->setTarget(0.5f, 0.0f, -1.57f, sixtron::RBDC_reference::relative);
-        //        ThisThread::sleep_for(10ms);
-        //        while (rbdc_result != sixtron::RBDC_status::RBDC_done)
-        //            ;
+        // nothing to do after the strat
     }
 }
