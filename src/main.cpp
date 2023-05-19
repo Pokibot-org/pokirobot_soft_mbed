@@ -414,7 +414,6 @@ int main() {
 
     // On recule et on sort de la zone, on pousse des palets jusqu'à la prochaine assiette, petite
     // correction d'angle au passage
-
     robot_goto(-0.34f, 0.00f, 0.80f);
     robot_goto(-0.34f, 0.00f, 0.00f);
     ignore_lidar = 0;
