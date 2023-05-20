@@ -217,6 +217,7 @@ void control() {
             rbdc_poki->start();
             checkLidar();
         } else if (current_mode == robot_mode::recover_from_block) {
+            
         }
 
         // Update RBDC
