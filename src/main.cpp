@@ -212,12 +212,12 @@ void control() {
             rbdc_poki->start();
             ignore_lidar = false;
             checkLidar();
-            rbdc_poki->setTarget(0.0f, 0.0f, 0.0f);
+            rbdc_poki->setTarget(+0.2f, 0.0f, 0.0f);
         } else if (current_mode == robot_mode::match_run) {
             rbdc_poki->start();
             checkLidar();
         } else if (current_mode == robot_mode::recover_from_block) {
-            
+
         }
 
         // Update RBDC
