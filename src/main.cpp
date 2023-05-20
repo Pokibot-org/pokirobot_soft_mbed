@@ -261,8 +261,10 @@ void robot_set_score(int score) {
 
     int length_score = sprintf(affich_buff, "SET SCOR %d\r\n", score);
     afficheur.write(affich_buff, length_score);
+    ThisThread::sleep_for(300ms);
     afficheur.write(affich_buff, length_score);
-    afficheur.write(affich_buff, length_score);
+    ThisThread::sleep_for(300ms);
+//    afficheur.write(affich_buff, length_score);
 }
 
 void return_base_process() {
@@ -367,6 +369,8 @@ int main() {
     robot_goto(+0.2f, 0.0f, 0.0f);
     robot_set_score(41);
     ignore_lidar = false;
+    ThisThread::sleep_for(2s);
+    robot_set_score(41);
 
     while (true) {
         mainThreadFlag.wait_any(MAIN_THREAD_FLAG);
