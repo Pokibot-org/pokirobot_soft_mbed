@@ -17,19 +17,15 @@ namespace sixtron {
 
 #define ENC_LEFT 0
 #define ENC_RIGHT 1
-#define ENC_REVOLUTION 16384
-#define MOTOR_REDUCTION 50
-#define ENC_WHEEL_RADIUS (0.07f / 2.0f)
-#define ENC_WHEELS_DISTANCE (0.315f)
 
     class OdometryPokibot: public OdometryTwoEncoders {
 
     public:
-        OdometryPokibot(float rate_hz, MotorSensorEncoder *left, MotorSensorEncoder *right):
+        OdometryPokibot(float rate_hz, MotorSensorEncoder *left, MotorSensorEncoder *right, float motor_resolution, float enc_wheel_radius, float entraxe):
                 OdometryTwoEncoders(rate_hz,
-                        (ENC_REVOLUTION * MOTOR_REDUCTION),
-                        ENC_WHEEL_RADIUS,
-                        ENC_WHEELS_DISTANCE),
+                        motor_resolution,
+                        enc_wheel_radius,
+                        entraxe),
                 _left(left),
                 _right(right) {};
 

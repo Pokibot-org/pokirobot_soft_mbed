@@ -9,15 +9,13 @@
 #ifndef MOTOR_BASE_POKIBOT_H
 #define MOTOR_BASE_POKIBOT_H
 
+#include "common.h"
 #include "mbed.h"
 #include "motor_DC_pokibot.h"
 #include "motor_base/motor_base_two_wheels.h"
 #include "motor_sensor_AS5047p.h"
 
 namespace sixtron {
-
-#define ENC_WHEELS_DISTANCE (0.315f)
-#define MAX_MOTOR_PWM 0.4f // With MBED, pwm command between -1.0f and +1.0f max !
 
 #define NOT_MOVING 0
 #define RUNNING_FRONT 1
@@ -27,10 +25,16 @@ namespace sixtron {
     class MotorBasePokibot: public MotorBaseTwoWheels {
 
     public:
-        MotorBasePokibot(
-                float rate_dt, MotorSensorEncoder *sensor_left, MotorSensorEncoder *sensor_right):
-                MotorBaseTwoWheels(ENC_WHEELS_DISTANCE),
+        MotorBasePokibot(float rate_dt,
+                MotorSensorEncoder *sensor_left,
+                MotorSensorEncoder *sensor_right,
+                PID_params motor_pid_params,
+                float entraxe,
+                float max_motor_pwm):
+                MotorBaseTwoWheels(entraxe),
                 _dt_pid(rate_dt),
+                _motor_pid_params(motor_pid_params),
+                _max_motor_pwm(max_motor_pwm),
                 _sensorLeft(sensor_left),
                 _sensorRight(sensor_right) {};
 
@@ -46,6 +50,8 @@ namespace sixtron {
 
     private:
         float _dt_pid; // in [s]
+        PID_params _motor_pid_params;
+        float _max_motor_pwm;
 
         int _running_side;
 

@@ -1,0 +1,46 @@
+/*
+ * POKIBOT 2024
+ * Mbed Software for Pokirobot V1
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+#ifndef ROBOT_POKIBOT_H
+#define ROBOT_POKIBOT_H
+
+#include "RBDC.h"
+#include "common.h"
+#include "lidar_serial.h"
+#include "motor_base_pokibot.h"
+#include "motor_sensor_AS5047p.h"
+#include "odometry_pokibot.h"
+
+// Robot and control parameters
+#define ONE_DEGREE_IN_RAD 0.017453f // 1°
+#define PID_DV_PRECISION 0.02f // 2 cm
+
+#define MAX_MOTOR_PWM 0.4f // With MBED, pwm command between -1.0f and +1.0f max !
+#define MOTOR_REDUCTION 50
+
+#define ENC_RESOLUTION 16384
+#define ENC_WHEEL_RADIUS (0.07f / 2.0f)
+//#define ENC_WHEELS_DISTANCE (0.3135f) //0.315f
+#define ENC_WHEELS_DISTANCE (0.315f) //0.315f
+
+void robot_goto(float x,
+        float y,
+        float theta,
+        bool blocking = true,
+        sixtron::RBDC_reference reference = sixtron::RBDC_reference::absolute);
+
+void robot_goto(float x,
+        float y,
+        bool blocking = true,
+        sixtron::RBDC_reference reference = sixtron::RBDC_reference::absolute);
+
+void robot_vector(float x, float y);
+
+void start_robot_pokibot_control_thread();
+
+void set_ignore_lidar(bool state);
+
+#endif // ROBOT_POKIBOT_H

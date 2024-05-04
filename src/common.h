@@ -62,8 +62,31 @@
 #define ENC_CS_LEFT PA_8
 #define ENC_CS_RIGHT PB_2
 
-
 #include "mbed.h"
+
+// Match Mode.
+typedef enum {
+    standby,
+    match_run,
+    recover_from_block,
+    return_to_base,
+    stop_now,
+} robot_mode;
+
+static volatile robot_mode current_mode = standby;
+
+// setup serial
+#define PRINTF_DEBUG_ENABLE 1
+#define MAX_PRINTF_LENGTH 200
+static UnbufferedSerial terminal(CONSOLE_TX, CONSOLE_RX, 921600);
+
+// custom printf
 void terminal_printf(const char *fmt, ...);
+void terminal_debug(const char *fmt, ...);
+
+// general user IO
+static DigitalOut led_out_green(LED_GREEN);
+static DigitalOut led_out_red(LED_RED);
+static DigitalIn user_button(BUTTON1);
 
 #endif
