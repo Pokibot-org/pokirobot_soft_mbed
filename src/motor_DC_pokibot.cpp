@@ -22,6 +22,9 @@ namespace sixtron {
     }
 
     void MotorDCPokibot::setPWM(float pwm) {
+
+        pwm = _inverted * pwm; // in case the motor is inverted
+
         // update hardware motor PWM
         if (pwm >= 0.0f) {
             _dir.write(0);

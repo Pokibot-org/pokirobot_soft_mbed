@@ -155,16 +155,17 @@ int main() {
     //    ThisThread::sleep_for(2s);
     //    robot_set_score(41);
 
-    set_ignore_lidar(true);
+//    set_ignore_lidar(true);
 
-    robot_goto(0.0f, 0.0f, -1.57f);
-    ThisThread::sleep_for(2s);
-    robot_goto(0.0f, 0.0f, -3.14f);
-    ThisThread::sleep_for(2s);
-    robot_goto(0.0f, 0.0f, +1.57f);
-    ThisThread::sleep_for(2s);
-    robot_goto(0.0f, 0.0f, 0.0f);
-    ThisThread::sleep_for(2s);
+//    robot_goto(0.0f, 0.0f,  1.57f);
+//    ThisThread::sleep_for(2s);
+//    robot_goto(0.0f, 0.0f,  3.14f);
+//    ThisThread::sleep_for(2s);
+//    robot_goto(0.0f, 0.0f, -1.57f);
+//    ThisThread::sleep_for(2s);
+//    robot_goto(0.0f, 0.0f, 0.0f);
+//    ThisThread::sleep_for(2s);
+    robot_goto(0.2f, 0.0f,  0.0f);
 
     while (true) {
                 mainThreadFlag.wait_any(MAIN_THREAD_FLAG);

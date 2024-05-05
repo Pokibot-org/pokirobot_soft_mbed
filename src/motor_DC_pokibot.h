@@ -15,6 +15,8 @@
 
 namespace sixtron {
 
+#define MOTOR_DIR_NORMAL (+1.0f)
+#define MOTOR_DIR_INVERTED (-1.0f)
 #define DEFAULT_MOTOR_MAX_PWM 1.0f // max PWM with mbed is 1.0f
 
     class MotorDCPokibot: public MotorDC {
@@ -25,8 +27,9 @@ namespace sixtron {
                 PinName dir,
                 PinName pwm,
                 PID_params motor_pid,
-                float max_pwm = DEFAULT_MOTOR_MAX_PWM):
-                MotorDC(rate_dt, motor_pid, max_pwm), _sensor(sensor), _dir(dir), _pwm(pwm) {};
+                float max_pwm = DEFAULT_MOTOR_MAX_PWM,
+                float direction = MOTOR_DIR_NORMAL):
+                MotorDC(rate_dt, motor_pid, max_pwm), _sensor(sensor), _dir(dir), _pwm(pwm), _inverted(direction) {};
 
     private:
         void initHardware() override;
@@ -37,6 +40,7 @@ namespace sixtron {
         MotorSensor *_sensor;
         DigitalOut _dir;
         PwmOut _pwm;
+        float _inverted;
     };
 
 } // namespace sixtron

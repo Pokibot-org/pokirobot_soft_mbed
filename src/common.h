@@ -59,8 +59,10 @@
 #define ENC_MOSI PA_7
 #define ENC_MISO PA_6
 #define ENC_SCK  PA_5
-#define ENC_CS_LEFT PA_8
-#define ENC_CS_RIGHT PB_2
+
+// inversé en 2024 pour avoir le robot dans le bon sens
+#define ENC_CS_LEFT PB_2
+#define ENC_CS_RIGHT PA_8
 
 #include "mbed.h"
 

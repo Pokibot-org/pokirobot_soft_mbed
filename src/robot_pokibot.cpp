@@ -119,7 +119,7 @@ void control() {
             ENC_WHEELS_DISTANCE);
 
     sixtron::PID_params pid_motor_params;
-    pid_motor_params.Kp = 3.0f;
+    pid_motor_params.Kp = 8.0f;
     //        pid_motor_params.Ki = 40.0f; // 5.0
     pid_motor_params.Ki = 0.5f; // 5.0
     pid_motor_params.Kd = 0.00f;
@@ -164,6 +164,7 @@ void control() {
     controlThreadTicker.attach(&controlThreadUpdate, CONTROL_THREAD_RATE);
     terminal_printf("[ASSERV] Init done.\n");
     float time_passed = 0.0f;
+
     while (true) {
 
         // Update RBDC (will automatically update odometry, motor base, QEI, motors, PIDs...)
@@ -171,23 +172,24 @@ void control() {
         controlThreadFlag.wait_any(CONTROL_THREAD_FLAG);
 
         /// CHECKING MODE
-        //        if (current_mode == robot_mode::stop_now) {
-        //            rbdc_poki->stop();
-        //            led_out_red = 1;
-        //            led_out_green = 0;
-        //        } else if (current_mode == robot_mode::return_to_base) {
-        //            rbdc_poki->start();
-        //            ignore_lidar = false;
-        //            checkLidar();
-        //            rbdc_poki->setTarget(+0.2f, 0.0f, 0.0f);
-        //        } else if (current_mode == robot_mode::match_run) {
-        //            rbdc_poki->start();
-        //            checkLidar();
-        //        } else if (current_mode == robot_mode::recover_from_block) {
-        //        }
+        if (current_mode == robot_mode::stop_now) {
+            rbdc_poki->stop();
+            led_out_red = 1;
+            led_out_green = 0;
+        } else if (current_mode == robot_mode::return_to_base) {
+            rbdc_poki->start();
+            ignore_lidar = false;
+            checkLidar();
+            rbdc_poki->setTarget(+0.2f, 0.0f, 0.0f);
+        } else if (current_mode == robot_mode::match_run) {
+            rbdc_poki->start();
+            checkLidar();
+        } else if (current_mode == robot_mode::recover_from_block) {
+        }
 
         // Update RBDC
-        rbdc_result = rbdc_poki->update();
+                rbdc_result = rbdc_poki->update();
+//        basePokibot->update();
 
         // Update time passed in control loop
         time_passed += dt_pid;
@@ -200,11 +202,12 @@ void control() {
         loop_debug--;
         if (loop_debug <= 0) {
             loop_debug = 100;
-            terminal_debug("X=%2.3fm, Y=%2.3fm, O=%2.3frad, %s\n",
-                    odom->getX(),
-                    odom->getY(),
-                    odom->getTheta(),
-                    rbdc_status[rbdc_result].c_str());
+                        terminal_debug("X=%2.3fm, Y=%2.3fm, O=%2.3frad, %s\n",
+                                odom->getX(),
+                                odom->getY(),
+                                odom->getTheta(),
+                                rbdc_status[rbdc_result].c_str());
+//            terminal_debug("O=%2.5frad, lidIgn %d lidF %d lidB %d %s\n", odom->getTheta(), ignore_lidar, lidar_front_trig, lidar_back_trig, rbdc_status[rbdc_result].c_str());
         }
 
 #endif
