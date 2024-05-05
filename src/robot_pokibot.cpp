@@ -37,10 +37,6 @@ const string rbdc_status[RBDC_MAX_STATUS] = {
 };
 volatile int rbdc_result = sixtron::RBDC_status::RBDC_standby;
 
-// sensors of zest half bridge
-// sixtron::ZestActuatorHalfBridgesSensors *internal_sensors;
-// static DigitalOut led1(LED1);
-
 // Be aware this is a blocking function by default
 void robot_goto(float x, float y, float theta, bool blocking, sixtron::RBDC_reference reference) {
 
@@ -92,9 +88,6 @@ void control() {
     terminal_printf("[ASSERV] Init ...\n");
 
     // Convert current rate of the loop in seconds (float)
-
-    //   float time_passed = 0.0f;
-
     auto f_secs = std::chrono::duration_cast<std::chrono::duration<float>>(CONTROL_THREAD_RATE);
     float dt_pid = f_secs.count(); // Very important for all PIDs
     float hz_pid = 1.0f / dt_pid;
@@ -131,40 +124,12 @@ void control() {
     pid_motor_params.Ki = 0.5f; // 5.0
     pid_motor_params.Kd = 0.00f;
     pid_motor_params.dt_seconds = dt_pid;
-    //        pid_motor_params.ramp = 1.0f * _dt_pid;
     pid_motor_params.ramp_high = 2.0f; // acc_max when ramping up (positive or negative) in [m/s²].
     pid_motor_params.ramp_low = 4.0f; // acc_max when ramping down (positive or negative) in [m/s²].
 
     // Create robot base. This will init all motors as well.  Will be init by RBDC.
     basePokibot = new sixtron::MotorBasePokibot(
             dt_pid, sensorLeft, sensorRight, pid_motor_params, ENC_WHEELS_DISTANCE, MAX_MOTOR_PWM);
-
-    //   // Motor PID parameters
-    //   sixtron::PID_params pid_motor_params;
-    //   pid_motor_params.Kp = 2.0f;
-    //   pid_motor_params.Ki = 20.0f;
-    //   pid_motor_params.Kd = 0.0f;
-    //   pid_motor_params.Kf = 3.0f;
-    //   pid_motor_params.dt_seconds = dt_pid;
-    //   pid_motor_params.ramp_high = 2.0f; // acc_max when ramping up (positive or negative) in
-    //   [m/s²]. pid_motor_params.ramp_low = 4.0f; // acc_max when ramping down (positive or
-    //   negative) in [m/s²].
-
-    //   // Setup and init the motor base (this will init all motors as well, see the .cpp file)
-    //   rolling_base = new sixtron::MotorBaseSixtron(
-    //           dt_pid, qei_left, qei_right, WHEELS_DISTANCE, pid_motor_params);
-    //   rolling_base->init();
-
-    // Setup and init odometry
-    //   odom = new sixtron::OdometrySixtron(
-    //           hz_pid, qei_left, qei_right, MOTOR_RESOLUTION, WHEEL_RADIUS, WHEELS_DISTANCE);
-    //   odom->init();
-
-    // #if MBED_CONF_APP_USE_BLUETOOTH_CONTROLLER
-    //    // Setup BT Thread
-    //    serialBTThread.start(callback(&serialBTEventQueue, &EventQueue::dispatch_forever));
-    //    serialBT.attach(&rxBTCallback);
-    // #else
 
     // Setup RBDC
     sixtron::RBDC_params rbdc_poki_params;
@@ -200,20 +165,6 @@ void control() {
     terminal_printf("[ASSERV] Init done.\n");
     float time_passed = 0.0f;
     while (true) {
-
-        // Wait for asserv tick
-        controlThreadFlag.wait_any(CONTROL_THREAD_FLAG);
-
-        // #if MBED_CONF_APP_USE_BLUETOOTH_CONTROLLER
-        //         // Update from bluetooth controller
-        //         odom->update();
-        //         sixtron::target_speeds speeds;
-        //         speeds.cmd_lin = ctrl_forward;
-        //         speeds.cmd_rot = ctrl_angle;
-        //         rolling_base->setTargetSpeeds(speeds);
-        //         rolling_base->update();
-        //
-        // #else
 
         // Update RBDC (will automatically update odometry, motor base, QEI, motors, PIDs...)
         // Wait for asserv tick
@@ -257,22 +208,15 @@ void control() {
         }
 
 #endif
-
-        // update time counter for next round
-        time_passed += dt_pid;
     }
 }
 
 // MBED STARTING NEW THREAD
 void start_robot_pokibot_control_thread() {
     controlThread.start(control);
-    //    controlThreadTicker.attach(&controlThreadUpdate, CONTROL_THREAD_RATE);
-    ThisThread::sleep_for(1s); // On attend une seconde avant de passer à la suite
+    ThisThread::sleep_for(500ms);
 
     // Setup Lidar
     lidarThread.start(lidarMain);
     ThisThread::sleep_for(500ms);
-
-    // Set current robot mode
-    current_mode = robot_mode::match_run;
 }
