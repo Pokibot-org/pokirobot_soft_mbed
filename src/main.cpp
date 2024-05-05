@@ -8,7 +8,7 @@
 #include "servo.h"
 #include "robot_pokibot.h"
 
-DigitalIn tirette(TIRETTE);
+
 
 // Set up printf over STLINK
 //Thread terminalThread(osPriorityBelowNormal, OS_STACK_SIZE);

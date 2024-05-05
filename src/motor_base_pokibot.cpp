@@ -52,4 +52,12 @@ namespace sixtron {
     int MotorBasePokibot::get_running_side() {
         return _running_side;
     }
+
+    MotorDCPokibot *MotorBasePokibot::getMotorLeft() {
+        return _motorLeft;
+    }
+
+    MotorDCPokibot *MotorBasePokibot::getMotorRight() {
+        return _motorRight;
+    }
 }

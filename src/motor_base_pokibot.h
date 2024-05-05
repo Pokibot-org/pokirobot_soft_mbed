@@ -48,6 +48,9 @@ namespace sixtron {
 
         int get_running_side();
 
+        MotorDCPokibot * getMotorLeft();
+        MotorDCPokibot * getMotorRight();
+
     private:
         float _dt_pid; // in [s]
         PID_params _motor_pid_params;

@@ -90,5 +90,7 @@ void terminal_debug(const char *fmt, ...);
 static DigitalOut led_out_green(LED_GREEN);
 static DigitalOut led_out_red(LED_RED);
 static DigitalIn user_button(BUTTON1);
+static DigitalIn user_switch_color(SW_ROBOT);
+static DigitalIn tirette(TIRETTE);
 
 #endif
