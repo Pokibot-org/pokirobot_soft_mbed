@@ -144,14 +144,14 @@ void control() {
     rbdc_poki_params.target_precision = 4 * PID_DV_PRECISION;
     rbdc_poki_params.dv_precision = 2 * PID_DV_PRECISION;
 
-    rbdc_poki_params.pid_param_dteta.Kp = 2.5f;
-    rbdc_poki_params.pid_param_dteta.Ki = 8.0f;
-    rbdc_poki_params.pid_param_dteta.Kd = 0.0f;
-
     rbdc_poki_params.pid_param_dv.Kp = 1.0f;
     rbdc_poki_params.pid_param_dv.Ki = 0.001f;
     rbdc_poki_params.pid_param_dv.Kd = 0.0f;
-    //    rbdc_poki_params.pid_param_dv.ramp = 0.2f * dt_pid;
+    rbdc_poki_params.pid_param_dv.ramp = 0.5f / rbdc_poki_params.pid_param_dv.Kp;
+
+    rbdc_poki_params.pid_param_dteta.Kp = 2.5f;
+    rbdc_poki_params.pid_param_dteta.Ki = 0.5f;
+    rbdc_poki_params.pid_param_dteta.Kd = 0.0f;
 
     rbdc_poki = new sixtron::RBDC(odom,
             basePokibot,
@@ -183,41 +183,41 @@ void control() {
         controlThreadFlag.wait_any(CONTROL_THREAD_FLAG);
 
         /// CHECKING MODE
-//        if (current_mode == robot_mode::stop_now) {
-//            rbdc_poki->stop();
-//            led_out_red = 1;
-//            led_out_green = 0;
-//        } else if (current_mode == robot_mode::return_to_base) {
-//            rbdc_poki->start();
-//            ignore_lidar = false;
-//            checkLidar();
-//            rbdc_poki->setTarget(+0.2f, 0.0f, 0.0f);
-//        } else if (current_mode == robot_mode::match_run) {
-//            rbdc_poki->start();
-//            checkLidar();
-//        } else if (current_mode == robot_mode::recover_from_block) {
-//        }
+        //        if (current_mode == robot_mode::stop_now) {
+        //            rbdc_poki->stop();
+        //            led_out_red = 1;
+        //            led_out_green = 0;
+        //        } else if (current_mode == robot_mode::return_to_base) {
+        //            rbdc_poki->start();
+        //            ignore_lidar = false;
+        //            checkLidar();
+        //            rbdc_poki->setTarget(+0.2f, 0.0f, 0.0f);
+        //        } else if (current_mode == robot_mode::match_run) {
+        //            rbdc_poki->start();
+        //            checkLidar();
+        //        } else if (current_mode == robot_mode::recover_from_block) {
+        //        }
 
         // Update RBDC
-        //                rbdc_result = rbdc_poki->update();
+        rbdc_result = rbdc_poki->update();
 
-        odom->update();
-
-        if (user_switch_color) {
-            base_motor_speeds = &debug_base;
-        } else {
-            base_motor_speeds = &speeds_nulls;
-        }
-        basePokibot->setTargetSpeeds(*base_motor_speeds);
-        basePokibot->update();
-
-        // Update time passed in control loop
-        time_passed += dt_pid;
+        // odom->update();
+        //
+        // if (user_switch_color) {
+        //     base_motor_speeds = &debug_base;
+        // } else {
+        //     base_motor_speeds = &speeds_nulls;
+        // }
+        // basePokibot->setTargetSpeeds(*base_motor_speeds);
+        // basePokibot->update();
+        //
+        // // Update time passed in control loop
+        // time_passed += dt_pid;
 
         //        terminal_printf("%d\n", rbdc_result);
         //        terminal_debug("t=%6.2fs, %s\n", time_passed, rbdc_status[rbdc_result].c_str());
 
-#ifdef PRINTF_DEBUG_ENABLE
+#if PRINTF_DEBUG_ENABLE
 #define LOOP_DEBUG_MAX 50
         static int loop_debug = LOOP_DEBUG_MAX;
         loop_debug--;
@@ -234,9 +234,9 @@ void control() {
             //            odom->getTheta(), ignore_lidar, lidar_front_trig, lidar_back_trig,
             //            rbdc_status[rbdc_result].c_str());
 
-//            terminal_debug("L=%2.3fm/s, R=%2.3fm/s\n",
-//                    basePokibot->getMotorLeft()->getSpeed(),
-//                    basePokibot->getMotorRight()->getSpeed());
+            //            terminal_debug("L=%2.3fm/s, R=%2.3fm/s\n",
+            //                    basePokibot->getMotorLeft()->getSpeed(),
+            //                    basePokibot->getMotorRight()->getSpeed());
 
             terminal_debug("%2.3f,%2.3f,%2.3f\n",
                     base_motor_speeds->cmd_lin,

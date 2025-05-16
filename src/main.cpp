@@ -5,14 +5,12 @@
  */
 
 #include "common.h"
-#include "servo.h"
 #include "robot_pokibot.h"
-
-
+#include "servo.h"
 
 // Set up printf over STLINK
-//Thread terminalThread(osPriorityBelowNormal, OS_STACK_SIZE);
-//EventQueue terminalEventQueue;
+// Thread terminalThread(osPriorityBelowNormal, OS_STACK_SIZE);
+// EventQueue terminalEventQueue;
 
 // Afficheur 7 seg
 static UnbufferedSerial afficheur(SEG7_RX, SEG7_TX, 9600);
@@ -77,8 +75,8 @@ int main() {
     ThisThread::sleep_for(1000ms);
 
     // Setup Serial Thread
-//    terminalThread.start(callback(&terminalEventQueue, &EventQueue::dispatch_forever));
-//    terminal.attach(&rxTerminalCallback);
+    //    terminalThread.start(callback(&terminalEventQueue, &EventQueue::dispatch_forever));
+    //    terminal.attach(&rxTerminalCallback);
 
     // Done init
     led_out_red = 0;
@@ -155,44 +153,49 @@ int main() {
     //    ThisThread::sleep_for(2s);
     //    robot_set_score(41);
 
-//    set_ignore_lidar(true);
+    //    set_ignore_lidar(true);
 
-//    robot_goto(0.0f, 0.0f,  1.57f);
-//    ThisThread::sleep_for(2s);
-//    robot_goto(0.0f, 0.0f,  3.14f);
-//    ThisThread::sleep_for(2s);
-//    robot_goto(0.0f, 0.0f, -1.57f);
-//    ThisThread::sleep_for(2s);
-//    robot_goto(0.0f, 0.0f, 0.0f);
-//    ThisThread::sleep_for(2s);
-    robot_goto(0.2f, 0.0f,  0.0f);
+    //    robot_goto(0.0f, 0.0f,  1.57f);
+    //    ThisThread::sleep_for(2s);
+    //    robot_goto(0.0f, 0.0f,  3.14f);
+    //    ThisThread::sleep_for(2s);
+    //    robot_goto(0.0f, 0.0f, -1.57f);
+    //    ThisThread::sleep_for(2s);
+    //    robot_goto(0.0f, 0.0f, 0.0f);
+    //    ThisThread::sleep_for(2s);
+
+    // 2024: pokirobot v1 not used, just do a square to check if rbdc working
+    robot_goto(0.5f, 0.0f, 0.0f);
+    robot_goto(0.5f, 0.5f, 0.0f);
+    robot_goto(0.0f, 0.5f, 0.0f);
+    robot_goto(0.0f, 0.0f, 0.0f);
 
     while (true) {
-                mainThreadFlag.wait_any(MAIN_THREAD_FLAG);
-//        led_out_green = 1;
-//        robot_goto(0.5f, 0.0f, -1.57f);
-//        led_out_green = 0;
-//        ThisThread::sleep_for(2s);
-//        led_out_green = 1;
-//        robot_goto(0.5f, 0.5f, -3.14f);
-//        led_out_green = 0;
-//        ThisThread::sleep_for(2s);
-//        led_out_green = 1;
-//        robot_goto(0.0f, 0.5f, +1.57f);
-//        led_out_green = 0;
-//        ThisThread::sleep_for(2s);
-//        led_out_green = 1;
-//        robot_goto(0.0f, 0.0f, 0.0f);
-//        led_out_green = 0;
-//        ThisThread::sleep_for(2s);
+        mainThreadFlag.wait_any(MAIN_THREAD_FLAG);
+        //        led_out_green = 1;
+        //        robot_goto(0.5f, 0.0f, -1.57f);
+        //        led_out_green = 0;
+        //        ThisThread::sleep_for(2s);
+        //        led_out_green = 1;
+        //        robot_goto(0.5f, 0.5f, -3.14f);
+        //        led_out_green = 0;
+        //        ThisThread::sleep_for(2s);
+        //        led_out_green = 1;
+        //        robot_goto(0.0f, 0.5f, +1.57f);
+        //        led_out_green = 0;
+        //        ThisThread::sleep_for(2s);
+        //        led_out_green = 1;
+        //        robot_goto(0.0f, 0.0f, 0.0f);
+        //        led_out_green = 0;
+        //        ThisThread::sleep_for(2s);
 
-//        robot_goto(0.0f, 0.0f, -1.57f);
-//        ThisThread::sleep_for(2s);
-//        robot_goto(0.0f, 0.0f, -3.14f);
-//        ThisThread::sleep_for(2s);
-//        robot_goto(0.0f, 0.0f, +1.57f);
-//        ThisThread::sleep_for(2s);
-//        robot_goto(0.0f, 0.0f, 0.0f);
+        //        robot_goto(0.0f, 0.0f, -1.57f);
+        //        ThisThread::sleep_for(2s);
+        //        robot_goto(0.0f, 0.0f, -3.14f);
+        //        ThisThread::sleep_for(2s);
+        //        robot_goto(0.0f, 0.0f, +1.57f);
+        //        ThisThread::sleep_for(2s);
+        //        robot_goto(0.0f, 0.0f, 0.0f);
         ThisThread::sleep_for(2s);
 
         // nothing to do after the strat
