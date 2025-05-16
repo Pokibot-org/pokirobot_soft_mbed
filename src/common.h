@@ -78,7 +78,7 @@ typedef enum {
 static volatile robot_mode current_mode = standby;
 
 // setup serial
-#define PRINTF_DEBUG_ENABLE 0
+#define PRINTF_DEBUG_ENABLE 1
 #define MAX_PRINTF_LENGTH 200
 static UnbufferedSerial terminal(CONSOLE_TX, CONSOLE_RX, 921600);
 
