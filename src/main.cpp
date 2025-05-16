@@ -164,11 +164,9 @@ int main() {
     //    robot_goto(0.0f, 0.0f, 0.0f);
     //    ThisThread::sleep_for(2s);
 
-    // 2024: pokirobot v1 not used, just do a square to check if rbdc working
-    robot_goto(0.5f, 0.0f, 0.0f);
-    robot_goto(0.5f, 0.5f, 0.0f);
-    robot_goto(0.0f, 0.5f, 0.0f);
-    robot_goto(0.0f, 0.0f, 0.0f);
+    // square size
+    static float square_size = 1.0f;
+    static rtos::Kernel::Clock::duration_u32 time_wait = 5s;
 
     while (true) {
         mainThreadFlag.wait_any(MAIN_THREAD_FLAG);
@@ -196,7 +194,15 @@ int main() {
         //        robot_goto(0.0f, 0.0f, +1.57f);
         //        ThisThread::sleep_for(2s);
         //        robot_goto(0.0f, 0.0f, 0.0f);
-        ThisThread::sleep_for(2s);
+
+        robot_goto(square_size, 0.0, DEG_TO_RAD(-90.0f));
+        ThisThread::sleep_for(time_wait);
+        robot_goto(square_size, square_size, DEG_TO_RAD(-180.0f));
+        ThisThread::sleep_for(time_wait);
+        robot_goto(0.0, square_size, DEG_TO_RAD(-270.0f));
+        ThisThread::sleep_for(time_wait);
+        robot_goto(0.0, 0.0, DEG_TO_RAD(0.0f));
+        ThisThread::sleep_for(time_wait);
 
         // nothing to do after the strat
     }

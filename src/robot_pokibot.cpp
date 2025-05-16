@@ -26,6 +26,8 @@ sixtron::OdometryPokibot *odom;
 
 sixtron::RBDC *rbdc_poki;
 
+sixtron::speed_profile default_linear_speeds, high_linear_speeds, low_linear_speeds;
+
 const string rbdc_status[RBDC_MAX_STATUS] = {
     "RBDC_standby",
     "RBDC_working",
@@ -75,6 +77,18 @@ void checkLidar() {
             rbdc_poki->pause();
         }
     }
+}
+
+void robot_normal_speed() {
+    rbdc_poki->resetSpeedProfile(sixtron::speed_controller_type::linear);
+}
+
+void robot_high_speed() {
+    rbdc_poki->setSpeedProfile(sixtron::speed_controller_type::linear, high_linear_speeds);
+}
+
+void robot_low_speed() {
+    rbdc_poki->setSpeedProfile(sixtron::speed_controller_type::linear, low_linear_speeds);
 }
 
 /* ######################  BOUCLE D'ASSERVISSEMENT   ############################################ */
@@ -134,24 +148,71 @@ void control() {
 
     // Setup RBDC
     sixtron::RBDC_params rbdc_poki_params;
-    rbdc_poki_params.rbdc_format = sixtron::RBDC_format::two_wheels_robot;
-    rbdc_poki_params.max_output_dv = 1.0f;
-    rbdc_poki_params.max_output_dtheta = 8.0f;
+    rbdc_poki_params.rbdc_format = sixtron::RBDC_format::differential_robot;
+
+    // Set behaviors for linear and angular control loops
+    rbdc_poki_params.linear_parameters.movement = sixtron::speed_movement_type::trapezoidal_only;
+    rbdc_poki_params.angular_parameters.movement = sixtron::speed_movement_type::pid_only;
+
+    // Define at least one default speed profile.
+    default_linear_speeds.max_accel = 0.7;
+    default_linear_speeds.max_decel = 3.4;
+    default_linear_speeds.max_speed = 2.0f; // in [m/s]
+
+    high_linear_speeds.max_accel = 1.4;
+    high_linear_speeds.max_decel = 4.0;
+    high_linear_speeds.max_speed = 2.0f;
+
+    low_linear_speeds.max_accel = 0.3;
+    low_linear_speeds.max_decel = 1.8;
+    low_linear_speeds.max_speed = 1.0f;
+
+    // Apply the default speed profile into RBDC parameters
+    rbdc_poki_params.linear_parameters.default_speeds = default_linear_speeds;
+
+    // very important to fine tune these two value with the robot behavior
+    rbdc_poki_params.linear_parameters.trapeze_tuning.pivot_gain = 0.100f; // See RBDC source code
+    rbdc_poki_params.linear_parameters.trapeze_tuning.precision_gain = 0.5f;
+
+    // NOT USED IN PID ONLY MODE
+    if (rbdc_poki_params.angular_parameters.movement != sixtron::speed_movement_type::pid_only) {
+        rbdc_poki_params.angular_parameters.default_speeds.max_accel = 1.0f * M_PI_F;
+        rbdc_poki_params.angular_parameters.default_speeds.max_decel = 4.0f * M_PI_F;
+        rbdc_poki_params.angular_parameters.default_speeds.max_speed = 3.0f * M_PI_F; // in [rad/s]
+    }
+
+    // set fine tune gain on angular just in case ?? not sure
+    rbdc_poki_params.angular_parameters.trapeze_tuning.precision_gain = 0.1f;
+
+    // Setup precisions
+    rbdc_poki_params.linear_parameters.precision = LINEAR_PRECISION;
+    rbdc_poki_params.angular_parameters.precision = ANGULAR_PRECISION;
+
     rbdc_poki_params.can_go_backward = true;
     rbdc_poki_params.dt_seconds = dt_pid;
-    rbdc_poki_params.final_theta_precision = 3 * ONE_DEGREE_IN_RAD;
-    rbdc_poki_params.moving_theta_precision = 10 * ONE_DEGREE_IN_RAD;
-    rbdc_poki_params.target_precision = 4 * PID_DV_PRECISION;
-    rbdc_poki_params.dv_precision = 2 * PID_DV_PRECISION;
 
-    rbdc_poki_params.pid_param_dv.Kp = 1.0f;
-    rbdc_poki_params.pid_param_dv.Ki = 0.001f;
-    rbdc_poki_params.pid_param_dv.Kd = 0.0f;
-    rbdc_poki_params.pid_param_dv.ramp = 0.5f / rbdc_poki_params.pid_param_dv.Kp;
+    /* USE THIS BLOC ONLY IF LINEAR CONTROL MOVEMENT USE THE PID! */
+    if (rbdc_poki_params.linear_parameters.movement == sixtron::speed_movement_type::pid_only
+            || rbdc_poki_params.linear_parameters.movement
+                    == sixtron::speed_movement_type::trapezoidal_and_pid) {
+        rbdc_poki_params.linear_parameters.pid_params.Kp = 1.0f;
+        rbdc_poki_params.linear_parameters.pid_params.Ki = 0.001f;
+        rbdc_poki_params.linear_parameters.pid_params.Kd = 0.0f;
+        rbdc_poki_params.linear_parameters.pid_params.ramp_high = 0.5f
+                / rbdc_poki_params.linear_parameters.pid_params.Kp; // Not outputs accel / decel !!
+        rbdc_poki_params.linear_parameters.pid_params.ramp_low
+                = 2.0f / rbdc_poki_params.linear_parameters.pid_params.Kp;
+    }
 
-    rbdc_poki_params.pid_param_dteta.Kp = 2.5f;
-    rbdc_poki_params.pid_param_dteta.Ki = 0.5f;
-    rbdc_poki_params.pid_param_dteta.Kd = 0.0f;
+    /* USE THIS BLOC ONLY IF ANGULAR CONTROL MOVEMENT USE THE PID! */
+    if (rbdc_poki_params.angular_parameters.movement == sixtron::speed_movement_type::pid_only) {
+        // Theta, or angular speed, PID parameters
+        rbdc_poki_params.angular_parameters.pid_params.Kp = 2.5f;
+        rbdc_poki_params.angular_parameters.pid_params.Ki = 0.5f;
+        rbdc_poki_params.angular_parameters.pid_params.Kd = 0.0f;
+        rbdc_poki_params.angular_parameters.pid_params.ramp
+                = 20.0f / rbdc_poki_params.angular_parameters.pid_params.Kp;
+    }
 
     rbdc_poki = new sixtron::RBDC(odom,
             basePokibot,
@@ -218,31 +279,41 @@ void control() {
         //        terminal_debug("t=%6.2fs, %s\n", time_passed, rbdc_status[rbdc_result].c_str());
 
 #if PRINTF_DEBUG_ENABLE
-#define LOOP_DEBUG_MAX 50
-        static int loop_debug = LOOP_DEBUG_MAX;
-        loop_debug--;
-        if (loop_debug <= 0) {
-            loop_debug = LOOP_DEBUG_MAX;
+        static int print_rbdc_result = 0;
+        static uint32_t timestamp = 1627551892437;
+        if (print_rbdc_result >= 50) {
+            print_rbdc_result = 0;
+            // terminal_printf("%s\n", rbdc_status[rbdc_result].c_str());
+            // terminal_printf("x=%dmm y=%dmm o=%drad %s\n",
+            //         int(odom->getX() * 1000.0f),
+            //         int(odom->getY() * 1000.0f),
+            //         int(odom->getTheta() * 10000.f),
+            //         rbdc_status[rbdc_result].c_str());
 
-            //                        terminal_debug("X=%2.3fm, Y=%2.3fm, O=%2.3frad, %s\n",
-            //                                odom->getX(),
-            //                                odom->getY(),
-            //                                odom->getTheta(),
-            //                                rbdc_status[rbdc_result].c_str());
+            // Use https://teleplot.fr/ for trajectory debug
+            // terminal_printf(">Trajectory:%f:%f§m|xy\n>Status:%s|t\n",
+            //         odom->getX(),
+            //         odom->getY(),
+            //         rbdc_status[rbdc_result].c_str());
 
-            //            terminal_debug("O=%2.5frad, lidIgn %d lidF %d lidB %d %s\n",
-            //            odom->getTheta(), ignore_lidar, lidar_front_trig, lidar_back_trig,
-            //            rbdc_status[rbdc_result].c_str());
+            // terminal_printf(">Trajectory:%f:%f§m|xy\n>Status:%d\n",
+            //         odom->getX(),
+            //         odom->getY(),
+            //         rbdc_result);
 
-            //            terminal_debug("L=%2.3fm/s, R=%2.3fm/s\n",
-            //                    basePokibot->getMotorLeft()->getSpeed(),
-            //                    basePokibot->getMotorRight()->getSpeed());
-
-            terminal_debug("%2.3f,%2.3f,%2.3f\n",
-                    base_motor_speeds->cmd_lin,
-                    basePokibot->getMotorLeft()->getSpeed(),
-                    basePokibot->getMotorRight()->getSpeed());
+            terminal_printf(">Trajectory:%f:%f§m|xy\n>Angle_current:%d:%f§rad\n>Angle_target:%d:%"
+                            "f§rad\n>Status:%s|t\nRBDC_Result:%d\n",
+                    odom->getX(),
+                    odom->getY(),
+                    timestamp,
+                    fmodf(odom->getTheta(), 2 * M_PI_F),
+                    timestamp,
+                    rbdc_poki->getTarget().pos.theta,
+                    rbdc_status[rbdc_result].c_str(),
+                    rbdc_result);
         }
+        print_rbdc_result++;
+        timestamp++;
 
 #endif
     }

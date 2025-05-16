@@ -11,21 +11,23 @@
 
 #include "mbed.h"
 #include "motor_sensor_AS5047p.h"
-#include "odometry/odometry_two_encoders.h"
+#include "odometry/odometry_differential.h"
 
 namespace sixtron {
 
 #define ENC_LEFT 0
 #define ENC_RIGHT 1
 
-    class OdometryPokibot: public OdometryTwoEncoders {
+    class OdometryPokibot: public OdometryDifferential {
 
     public:
-        OdometryPokibot(float rate_hz, MotorSensorEncoder *left, MotorSensorEncoder *right, float motor_resolution, float enc_wheel_radius, float entraxe):
-                OdometryTwoEncoders(rate_hz,
-                        motor_resolution,
-                        enc_wheel_radius,
-                        entraxe),
+        OdometryPokibot(float rate_hz,
+                MotorSensorEncoder *left,
+                MotorSensorEncoder *right,
+                float motor_resolution,
+                float enc_wheel_radius,
+                float entraxe):
+                OdometryDifferential(rate_hz, motor_resolution, enc_wheel_radius, entraxe),
                 _left(left),
                 _right(right) {};
 

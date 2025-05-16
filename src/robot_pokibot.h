@@ -10,21 +10,24 @@
 #include "RBDC.h"
 #include "common.h"
 #include "lidar_serial.h"
-#include "motor_base_pokibot.h"
+#include "mobile-base_pokibot.h"
 #include "motor_sensor_AS5047p.h"
 #include "odometry_pokibot.h"
 
 // Robot and control parameters
 #define ONE_DEGREE_IN_RAD 0.017453f // 1°
-#define PID_DV_PRECISION 0.02f // 2 cm
+#define DEG_TO_RAD(x) (x * ONE_DEGREE_IN_RAD)
+
+#define LINEAR_PRECISION 0.02f // 2 cm
+#define ANGULAR_PRECISION DEG_TO_RAD(3.0f)
 
 #define MAX_MOTOR_PWM 0.4f // With MBED, pwm command between -1.0f and +1.0f max !
 #define MOTOR_REDUCTION 50
 
 #define ENC_RESOLUTION 16384
 #define ENC_WHEEL_RADIUS (0.07f / 2.0f)
-//#define ENC_WHEELS_DISTANCE (0.3135f) //0.315f
-#define ENC_WHEELS_DISTANCE (0.315f) //0.315f
+// #define ENC_WHEELS_DISTANCE (0.3135f) //0.315f
+#define ENC_WHEELS_DISTANCE (0.315f) // 0.315f
 
 void robot_goto(float x,
         float y,
