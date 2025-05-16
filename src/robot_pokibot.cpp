@@ -134,13 +134,13 @@ void control() {
 
     sixtron::PID_params pid_motor_params;
     pid_motor_params.Kp = 6.0f;
-    //        pid_motor_params.Ki = 40.0f; // 5.0
-    pid_motor_params.Ki = 2.0f; // 5.0
+    pid_motor_params.Ki = 20.0f; // 5.0
     pid_motor_params.Kd = 0.00f;
     pid_motor_params.Kf = 4.0f;
     pid_motor_params.dt_seconds = dt_pid;
-    pid_motor_params.ramp_high = 2.0f; // acc_max when ramping up (positive or negative) in [m/s²].
-    pid_motor_params.ramp_low = 4.0f; // acc_max when ramping down (positive or negative) in [m/s²].
+    // pid_motor_params.ramp_high = 2.0f; // acc_max when ramping up (positive or negative) in
+    // [m/s²]. pid_motor_params.ramp_low = 4.0f; // acc_max when ramping down (positive or negative)
+    // in [m/s²].
 
     // Create robot base. This will init all motors as well.  Will be init by RBDC.
     basePokibot = new sixtron::MotorBasePokibot(
@@ -156,23 +156,23 @@ void control() {
 
     // Define at least one default speed profile.
     default_linear_speeds.max_accel = 0.7;
-    default_linear_speeds.max_decel = 3.4;
-    default_linear_speeds.max_speed = 2.0f; // in [m/s]
+    default_linear_speeds.max_decel = 1.6;
+    default_linear_speeds.max_speed = 0.8f; // in [m/s], neet at least MAX_MOTOR_PWM to 0.7
 
-    high_linear_speeds.max_accel = 1.4;
-    high_linear_speeds.max_decel = 4.0;
-    high_linear_speeds.max_speed = 2.0f;
+    high_linear_speeds.max_accel = 1.2;
+    high_linear_speeds.max_decel = 2.0;
+    high_linear_speeds.max_speed = 1.0f; // need to "MAX_MOTOR_PWM" to 0.85
 
     low_linear_speeds.max_accel = 0.3;
-    low_linear_speeds.max_decel = 1.8;
-    low_linear_speeds.max_speed = 1.0f;
+    low_linear_speeds.max_decel = 1.2;
+    low_linear_speeds.max_speed = 0.4f;
 
     // Apply the default speed profile into RBDC parameters
     rbdc_poki_params.linear_parameters.default_speeds = default_linear_speeds;
 
     // very important to fine tune these two value with the robot behavior
     rbdc_poki_params.linear_parameters.trapeze_tuning.pivot_gain = 0.100f; // See RBDC source code
-    rbdc_poki_params.linear_parameters.trapeze_tuning.precision_gain = 0.5f;
+    rbdc_poki_params.linear_parameters.trapeze_tuning.precision_gain = 0.1f;
 
     // NOT USED IN PID ONLY MODE
     if (rbdc_poki_params.angular_parameters.movement != sixtron::speed_movement_type::pid_only) {
@@ -188,27 +188,29 @@ void control() {
     rbdc_poki_params.linear_parameters.precision = LINEAR_PRECISION;
     rbdc_poki_params.angular_parameters.precision = ANGULAR_PRECISION;
 
-    rbdc_poki_params.can_go_backward = true;
+    // need to improve weight distribution before allowing moving backward...
+    rbdc_poki_params.can_go_backward = false;
     rbdc_poki_params.dt_seconds = dt_pid;
 
     /* USE THIS BLOC ONLY IF LINEAR CONTROL MOVEMENT USE THE PID! */
-    if (rbdc_poki_params.linear_parameters.movement == sixtron::speed_movement_type::pid_only
-            || rbdc_poki_params.linear_parameters.movement
-                    == sixtron::speed_movement_type::trapezoidal_and_pid) {
-        rbdc_poki_params.linear_parameters.pid_params.Kp = 1.0f;
-        rbdc_poki_params.linear_parameters.pid_params.Ki = 0.001f;
-        rbdc_poki_params.linear_parameters.pid_params.Kd = 0.0f;
-        rbdc_poki_params.linear_parameters.pid_params.ramp_high = 0.5f
-                / rbdc_poki_params.linear_parameters.pid_params.Kp; // Not outputs accel / decel !!
-        rbdc_poki_params.linear_parameters.pid_params.ramp_low
-                = 2.0f / rbdc_poki_params.linear_parameters.pid_params.Kp;
-    }
+    // if ((rbdc_poki_params.linear_parameters.movement == sixtron::speed_movement_type::pid_only)
+    //         || (rbdc_poki_params.linear_parameters.movement
+    //                 == sixtron::speed_movement_type::trapezoidal_and_pid)) {
+    //     rbdc_poki_params.linear_parameters.pid_params.Kp = 1.0f;
+    //     rbdc_poki_params.linear_parameters.pid_params.Ki = 0.001f;
+    //     rbdc_poki_params.linear_parameters.pid_params.Kd = 0.0f;
+    //     rbdc_poki_params.linear_parameters.pid_params.ramp_high = 0.5f
+    //             / rbdc_poki_params.linear_parameters.pid_params.Kp; // Not outputs accel / decel
+    //             !!
+    //     rbdc_poki_params.linear_parameters.pid_params.ramp_low
+    //             = 2.0f / rbdc_poki_params.linear_parameters.pid_params.Kp;
+    // }
 
     /* USE THIS BLOC ONLY IF ANGULAR CONTROL MOVEMENT USE THE PID! */
     if (rbdc_poki_params.angular_parameters.movement == sixtron::speed_movement_type::pid_only) {
         // Theta, or angular speed, PID parameters
-        rbdc_poki_params.angular_parameters.pid_params.Kp = 2.5f;
-        rbdc_poki_params.angular_parameters.pid_params.Ki = 0.5f;
+        rbdc_poki_params.angular_parameters.pid_params.Kp = 2.0f;
+        rbdc_poki_params.angular_parameters.pid_params.Ki = 0.0f;
         rbdc_poki_params.angular_parameters.pid_params.Kd = 0.0f;
         rbdc_poki_params.angular_parameters.pid_params.ramp
                 = 20.0f / rbdc_poki_params.angular_parameters.pid_params.Kp;
@@ -302,7 +304,7 @@ void control() {
             //         rbdc_result);
 
             terminal_printf(">Trajectory:%f:%f§m|xy\n>Angle_current:%d:%f§rad\n>Angle_target:%d:%"
-                            "f§rad\n>Status:%s|t\nRBDC_Result:%d\n",
+                            "f§rad\n>Status:%s|t\n>RBDC_Result:%d\n",
                     odom->getX(),
                     odom->getY(),
                     timestamp,

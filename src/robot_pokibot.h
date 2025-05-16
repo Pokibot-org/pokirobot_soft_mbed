@@ -18,10 +18,10 @@
 #define ONE_DEGREE_IN_RAD 0.017453f // 1°
 #define DEG_TO_RAD(x) (x * ONE_DEGREE_IN_RAD)
 
-#define LINEAR_PRECISION 0.02f // 2 cm
-#define ANGULAR_PRECISION DEG_TO_RAD(3.0f)
+#define LINEAR_PRECISION 0.05f // 2 cm
+#define ANGULAR_PRECISION DEG_TO_RAD(5.0f)
 
-#define MAX_MOTOR_PWM 0.4f // With MBED, pwm command between -1.0f and +1.0f max !
+#define MAX_MOTOR_PWM 0.85f // With MBED, pwm command between -1.0f and +1.0f max !
 #define MOTOR_REDUCTION 50
 
 #define ENC_RESOLUTION 16384
@@ -45,5 +45,9 @@ void robot_vector(float x, float y);
 void start_robot_pokibot_control_thread();
 
 void set_ignore_lidar(bool state);
+
+void robot_normal_speed();
+void robot_low_speed();
+void robot_high_speed();
 
 #endif // ROBOT_POKIBOT_H
