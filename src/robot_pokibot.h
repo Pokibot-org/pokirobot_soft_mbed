@@ -25,9 +25,8 @@
 #define MOTOR_REDUCTION 50
 
 #define ENC_RESOLUTION 16384
-#define ENC_WHEEL_RADIUS (0.07f / 2.0f)
-// #define ENC_WHEELS_DISTANCE (0.3135f) //0.315f
-#define ENC_WHEELS_DISTANCE (0.315f) // 0.315f
+#define ENC_WHEEL_RADIUS 0.0367f // (0.072f / 2.0f) 0.0367 best value with green banebots wheels
+#define ENC_WHEELS_DISTANCE (0.328f) // best value with green banebots wheels
 
 void robot_goto(float x,
         float y,
