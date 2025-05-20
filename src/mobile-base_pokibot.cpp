@@ -17,19 +17,19 @@ namespace sixtron {
         // anciennemment PH_1 et PB_7, inversé en 2024 pour avoir le robot dans le bon sens
         _motorLeft = new sixtron::MotorDCPokibot(_dt_pid,
                 _sensorLeft,
-                PA_4,
-                PB_6,
-                _motor_pid_params,
-                _max_motor_pwm,
-                MOTOR_DIR_INVERTED);
-        // anciennement PA_4 et PB_6, inversé en 2024 pour avoir le robot dans le bon sens
-        _motorRight = new sixtron::MotorDCPokibot(_dt_pid,
-                _sensorRight,
                 PH_1,
                 PB_7,
                 _motor_pid_params,
                 _max_motor_pwm,
-                MOTOR_DIR_INVERTED);
+                MOTOR_DIR_NORMAL);
+        // anciennement PA_4 et PB_6, inversé en 2024 pour avoir le robot dans le bon sens
+        _motorRight = new sixtron::MotorDCPokibot(_dt_pid,
+                _sensorRight,
+                PA_4,
+                PB_6,
+                _motor_pid_params,
+                _max_motor_pwm,
+                MOTOR_DIR_NORMAL);
 
         _motorLeft->init();
         _motorRight->init();

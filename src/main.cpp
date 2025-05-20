@@ -165,7 +165,7 @@ int main() {
     //    ThisThread::sleep_for(2s);
 
     // square size
-    static float square_size = 1.0f;
+    static float square_size = 0.5f;
     static rtos::Kernel::Clock::duration_u32 time_wait = 1s;
 
     // robot speed

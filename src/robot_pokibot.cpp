@@ -261,6 +261,9 @@ void control() {
         //        } else if (current_mode == robot_mode::recover_from_block) {
         //        }
 
+        rbdc_poki->start(); // restart lidar if it was paused
+        checkLidar(); // pause if lidar
+
         // Update RBDC
         rbdc_result = rbdc_poki->update();
 
