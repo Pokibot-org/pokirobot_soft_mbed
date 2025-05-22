@@ -55,8 +55,15 @@ namespace sixtron {
             _running_side = NOT_MOVING;
         }
 
-        _motorLeft->update();
-        _motorRight->update();
+        if (_mobile_base_status == mobile_base_start) {
+            _motorLeft->update();
+            _motorRight->update();
+        } else if (_mobile_base_status == mobile_base_stop) {
+            _motorLeft->standby();
+            _motorRight->standby();
+        }
+
+
     }
 
     int MotorBasePokibot::get_running_side() {

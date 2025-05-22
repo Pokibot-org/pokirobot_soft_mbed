@@ -262,7 +262,7 @@ void control() {
         //        }
 
         rbdc_poki->start(); // restart lidar if it was paused
-        checkLidar(); // pause if lidar
+        checkLidar(); // pause if lidar triggered
 
         // Update RBDC
         rbdc_result = rbdc_poki->update();
