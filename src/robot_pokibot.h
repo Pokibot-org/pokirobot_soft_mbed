@@ -19,7 +19,7 @@
 #define DEG_TO_RAD(x) (x * ONE_DEGREE_IN_RAD)
 
 #define LINEAR_PRECISION 0.05f // 2 cm
-#define ANGULAR_PRECISION DEG_TO_RAD(5.0f)
+#define ANGULAR_PRECISION DEG_TO_RAD(3.0f)
 
 #define MAX_MOTOR_PWM 0.85f // With MBED, pwm command between -1.0f and +1.0f max !
 #define MOTOR_REDUCTION 50
@@ -38,6 +38,9 @@ void robot_goto(float x,
         float y,
         bool blocking = true,
         sixtron::RBDC_reference reference = sixtron::RBDC_reference::absolute);
+
+// Robot set absolute position
+void robot_set_position(float x, float y, float theta);
 
 void robot_vector(float x, float y);
 

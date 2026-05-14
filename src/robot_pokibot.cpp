@@ -26,6 +26,7 @@ sixtron::OdometryPokibot *odom;
 
 sixtron::RBDC *rbdc_poki;
 
+sixtron::speed_profile default_angular_speeds;
 sixtron::speed_profile default_linear_speeds, high_linear_speeds, low_linear_speeds;
 
 const string rbdc_status[RBDC_MAX_STATUS] = {
@@ -61,6 +62,11 @@ void robot_goto(float x, float y, bool blocking, sixtron::RBDC_reference referen
             ThisThread::sleep_for(10ms);
         }
     }
+}
+
+void robot_set_position(float x, float y, float theta) {
+    rbdc_poki->setAbsolutePosition(x, y, theta);
+    ThisThread::sleep_for(200ms);
 }
 
 void set_ignore_lidar(bool state) {
@@ -152,7 +158,7 @@ void control() {
 
     // Set behaviors for linear and angular control loops
     rbdc_poki_params.linear_parameters.movement = sixtron::speed_movement_type::trapezoidal_only;
-    rbdc_poki_params.angular_parameters.movement = sixtron::speed_movement_type::pid_only;
+    rbdc_poki_params.angular_parameters.movement = sixtron::speed_movement_type::trapezoidal_only;
 
     // Define at least one default speed profile.
     default_linear_speeds.max_accel = 0.7;
@@ -166,6 +172,10 @@ void control() {
     low_linear_speeds.max_accel = 0.3;
     low_linear_speeds.max_decel = 1.2;
     low_linear_speeds.max_speed = 0.4f;
+    //
+    // default_angular_speeds.max_accel = 0.3;
+    // default_angular_speeds.max_decel = 1.2;
+    // default_angular_speeds.max_speed = 0.4f;
 
     // Apply the default speed profile into RBDC parameters
     rbdc_poki_params.linear_parameters.default_speeds = default_linear_speeds;
@@ -174,6 +184,10 @@ void control() {
     rbdc_poki_params.linear_parameters.trapeze_tuning.pivot_gain = 0.100f; // See RBDC source code
     rbdc_poki_params.linear_parameters.trapeze_tuning.precision_gain = 0.1f;
 
+    // set fine tune gain on angular just in case ?? not sure
+    rbdc_poki_params.angular_parameters.trapeze_tuning.pivot_gain = 0.100f; // See RBDC source code
+    rbdc_poki_params.angular_parameters.trapeze_tuning.precision_gain = 0.1f;
+
     // NOT USED IN PID ONLY MODE
     if (rbdc_poki_params.angular_parameters.movement != sixtron::speed_movement_type::pid_only) {
         rbdc_poki_params.angular_parameters.default_speeds.max_accel = 1.0f * M_PI_F;
@@ -181,15 +195,12 @@ void control() {
         rbdc_poki_params.angular_parameters.default_speeds.max_speed = 3.0f * M_PI_F; // in [rad/s]
     }
 
-    // set fine tune gain on angular just in case ?? not sure
-    rbdc_poki_params.angular_parameters.trapeze_tuning.precision_gain = 0.1f;
-
     // Setup precisions
     rbdc_poki_params.linear_parameters.precision = LINEAR_PRECISION;
     rbdc_poki_params.angular_parameters.precision = ANGULAR_PRECISION;
 
-    // need to improve weight distribution before allowing moving backward...
-    rbdc_poki_params.can_go_backward = false;
+    // Need to go backward
+    rbdc_poki_params.can_go_backward = true;
     rbdc_poki_params.dt_seconds = dt_pid;
 
     /* USE THIS BLOC ONLY IF LINEAR CONTROL MOVEMENT USE THE PID! */

@@ -78,13 +78,30 @@ int main() {
     //    terminalThread.start(callback(&terminalEventQueue, &EventQueue::dispatch_forever));
     //    terminal.attach(&rxTerminalCallback);
 
-    // Done init
-    led_out_red = 0;
-    led_out_green = 1;
-
     // Servo
     servosTimerInit();
     servoSetPwmDuty(SERVO0, 1500);
+
+    // recalage
+    robot_low_speed();
+    // d'abord en arrière ...
+    robot_goto(-0.45f, 0.0f,  true, sixtron::RBDC_reference::relative);
+    robot_goto(+0.30f, 0.0f,  true, sixtron::RBDC_reference::relative);
+    // ... puis sur le coté ...
+    robot_goto(0.0f, 0.0f, DEG_TO_RAD(+90.0f), true, sixtron::RBDC_reference::relative);
+    robot_goto(-0.45f, 0.0f,  true, sixtron::RBDC_reference::relative);
+    // ... et ensuite on vient se mettre en position
+    robot_goto(+0.20f, 0.0f,  true, sixtron::RBDC_reference::relative);
+    robot_goto(0.0f, 0.0f, DEG_TO_RAD(-90.0f), true, sixtron::RBDC_reference::relative);
+
+    // on reset l'odom
+    ThisThread::sleep_for(200ms);
+    robot_set_position(0.0f, 0.0f, 0.0);
+
+    // Done init
+    ThisThread::sleep_for(500ms);
+    led_out_red = 0;
+    led_out_green = 1;
 
     // end
     terminal_printf("Init Done.\n");
