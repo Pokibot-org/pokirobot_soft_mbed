@@ -85,11 +85,11 @@ int main() {
     // recalage
     robot_low_speed();
     // d'abord en arrière ...
-    robot_goto(-0.45f, 0.0f,  true, sixtron::RBDC_reference::relative);
-    robot_goto(+0.30f, 0.0f,  true, sixtron::RBDC_reference::relative);
+    robot_goto(-0.35f, 0.0f,  true, sixtron::RBDC_reference::relative);
+    robot_goto(+0.25f, 0.0f,  true, sixtron::RBDC_reference::relative);
     // ... puis sur le coté ...
     robot_goto(0.0f, 0.0f, DEG_TO_RAD(+90.0f), true, sixtron::RBDC_reference::relative);
-    robot_goto(-0.45f, 0.0f,  true, sixtron::RBDC_reference::relative);
+    robot_goto(-0.35f, 0.0f,  true, sixtron::RBDC_reference::relative);
     // ... et ensuite on vient se mettre en position
     robot_goto(+0.20f, 0.0f,  true, sixtron::RBDC_reference::relative);
     robot_goto(0.0f, 0.0f, DEG_TO_RAD(-90.0f), true, sixtron::RBDC_reference::relative);

@@ -21,7 +21,7 @@
 #define LINEAR_PRECISION 0.05f // 2 cm
 #define ANGULAR_PRECISION DEG_TO_RAD(3.0f)
 
-#define MAX_MOTOR_PWM 0.85f // With MBED, pwm command between -1.0f and +1.0f max !
+#define MAX_MOTOR_PWM 0.95f // With MBED, pwm command between -1.0f and +1.0f max !
 #define MOTOR_REDUCTION 50
 
 #define ENC_RESOLUTION 16384
