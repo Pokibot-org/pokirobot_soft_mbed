@@ -80,7 +80,7 @@ int main() {
 
     // Servo
     servosTimerInit();
-    servoSetPwmDuty(SERVO0, 1500);
+    servoSetPwmDuty(SERVO0, 0); // 700 full speed ?
 
     // recalage
     robot_low_speed();
@@ -91,7 +91,7 @@ int main() {
     robot_goto(0.0f, 0.0f, DEG_TO_RAD(+90.0f), true, sixtron::RBDC_reference::relative);
     robot_goto(-0.35f, 0.0f,  true, sixtron::RBDC_reference::relative);
     // ... et ensuite on vient se mettre en position
-    robot_goto(+0.20f, 0.0f,  true, sixtron::RBDC_reference::relative);
+    robot_goto(+0.15f, 0.0f,  true, sixtron::RBDC_reference::relative);
     robot_goto(0.0f, 0.0f, DEG_TO_RAD(-90.0f), true, sixtron::RBDC_reference::relative);
 
     // on reset l'odom
