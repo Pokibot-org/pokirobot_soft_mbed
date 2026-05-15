@@ -78,16 +78,35 @@ int main() {
     //    terminalThread.start(callback(&terminalEventQueue, &EventQueue::dispatch_forever));
     //    terminal.attach(&rxTerminalCallback);
 
+    // Servo
+    servosTimerInit();
+    servoSetPwmDuty(SERVO0, 0); // 700 full speed ?
+
+    // recalage
+    robot_low_speed();
+    // d'abord en arrière ...
+    robot_goto(-0.35f, 0.0f,  true, sixtron::RBDC_reference::relative);
+    robot_goto(+0.25f, 0.0f,  true, sixtron::RBDC_reference::relative);
+    // ... puis sur le coté ...
+    robot_goto(0.0f, 0.0f, DEG_TO_RAD(+90.0f), true, sixtron::RBDC_reference::relative);
+    robot_goto(-0.35f, 0.0f,  true, sixtron::RBDC_reference::relative);
+    // ... et ensuite on vient se mettre en position
+    robot_goto(+0.15f, 0.0f,  true, sixtron::RBDC_reference::relative);
+    robot_goto(0.0f, 0.0f, DEG_TO_RAD(-90.0f), true, sixtron::RBDC_reference::relative);
+
+    // on reset l'odom
+    ThisThread::sleep_for(200ms);
+    robot_set_position(0.0f, 0.0f, 0.0);
+
     // Done init
+    ThisThread::sleep_for(500ms);
     led_out_red = 0;
     led_out_green = 1;
 
-    // Servo
-    servosTimerInit();
-    servoSetPwmDuty(SERVO0, 1500);
-
     // end
     terminal_printf("Init Done.\n");
+
+    robot_normal_speed();
 
     // wait for tirette
     while (tirette)
@@ -98,8 +117,8 @@ int main() {
     // Set current robot mode
     current_mode = robot_mode::match_run;
 
-    //    returning_to_base.attach(&return_base_process, 80s);
-    //    ending.attach(&end_process, 98s);
+    returning_to_base.attach(&return_base_process, 80s);
+    ending.attach(&end_process, 98s);
 
     robot_set_score(0);
     //
@@ -165,11 +184,11 @@ int main() {
     //    ThisThread::sleep_for(2s);
 
     // square size
-    static float square_size = 0.5f;
-    static rtos::Kernel::Clock::duration_u32 time_wait = 1s;
+    // static float square_size = 0.5f;
+    // static rtos::Kernel::Clock::duration_u32 time_wait = 1s;
 
     // robot speed
-    robot_normal_speed();
+    // robot_normal_speed();
 
     while (true) {
         mainThreadFlag.wait_any(MAIN_THREAD_FLAG);
@@ -198,15 +217,15 @@ int main() {
         //        ThisThread::sleep_for(2s);
         //        robot_goto(0.0f, 0.0f, 0.0f);
 
-        // FULL SQUARE
-        robot_goto(square_size, 0.0);
-        ThisThread::sleep_for(time_wait);
-        robot_goto(square_size, square_size);
-        ThisThread::sleep_for(time_wait);
-        robot_goto(0.0, square_size);
-        ThisThread::sleep_for(time_wait);
-        robot_goto(0.0, 0.0);
-        ThisThread::sleep_for(time_wait);
+        // // FULL SQUARE
+        // robot_goto(square_size, 0.0);
+        // ThisThread::sleep_for(time_wait);
+        // robot_goto(square_size, square_size);
+        // ThisThread::sleep_for(time_wait);
+        // robot_goto(0.0, square_size);
+        // ThisThread::sleep_for(time_wait);
+        // robot_goto(0.0, 0.0);
+        // ThisThread::sleep_for(time_wait);
 
         // ANGULAR ONLY
         // robot_goto(0.0, 0.0, DEG_TO_RAD(-90.0f));
